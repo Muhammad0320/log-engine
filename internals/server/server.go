@@ -29,8 +29,8 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 
 	apiv1 := router.Group("/api/v1")
 	{
-		apiv1.POST("/log", s.handleLogIngest)
-		apiv1.GET("/log", s.handleGetLogs)
+		apiv1.POST("/logs", s.handleLogIngest)
+		apiv1.GET("/logs", s.handleGetLogs)
 	}
 }
 
@@ -67,5 +67,5 @@ func (s *Server) handleGetLogs(c *gin.Context)  {
 	}
 
 	c.JSON(200, gin.H{"logs": logs})
-
 }
+

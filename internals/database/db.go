@@ -15,6 +15,14 @@ type LogEntry struct {
 	Service string `json:"service"`
 }
 
+// I should have extended LogEntry instead of redefining it. But I dont know how to do that in Go.
+type LogExit struct {
+	Timestamp time.Time `json:"timestamp"`
+	Level   string `json:"level"`
+	Message string `json:"message"`
+	Service string `json:"service"`
+}
+
 // ConnectDB tries to connect to the database and returns the connection.
 func ConnectDB(ctx context.Context, connString string) (*pgx.Conn, error) {
 	db, err := pgx.Connect(ctx, connString)
@@ -79,7 +87,7 @@ func InsertLog(ctx context.Context, db *pgx.Conn, log LogEntry) error {
 	return nil
 }
 
-func GetLogs(ctx context.Context, db *pgx.Conn) ([]LogEntry, error) { 
+func GetLogs(ctx context.Context, db *pgx.Conn) ([]LogExit, error) { 
 
 	getSQL := `SELECT * FROM logs`
 
@@ -89,10 +97,10 @@ func GetLogs(ctx context.Context, db *pgx.Conn) ([]LogEntry, error) {
 	}
 	defer rows.Close();
 
-	var logs []LogEntry
+	var logs []LogExit
 	for rows.Next() {
-		var log LogEntry
-		err := rows.Scan(&log.Level, &log.Message, &log.Service)
+		var log LogExit
+		err := rows.Scan(&log.Timestamp, &log.Level, &log.Message, &log.Service)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan log: %w", err)
 		}
