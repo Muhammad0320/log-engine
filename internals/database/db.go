@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -119,14 +120,32 @@ func InsertLog(ctx context.Context, db *pgx.Conn, log LogEntry) error {
 
 func GetLogs(ctx context.Context, db *pgx.Conn, limit int, offset int, searchQuery string) ([]LogEntry, error) { 
 
-	getSQL := `SELECT timestamp, level, message, service
-	 FROM logs
-	 ORDER BY timestamp DESC 
-	LIMIT $1
-	OFFSET $2;
-	`;
+	args := make([]interface{}, 0)
+	argsCounter := 1
 
-	rows, err := db.Query(ctx, getSQL, limit, offset)
+	
+	
+	var queryBuilder strings.Builder
+	queryBuilder.WriteString(`
+		SELECT timestamp, level, message, service 
+		FROM logs
+	`)
+
+	// Conditionally add the WHERE clause for search
+	if searchQuery != "" {
+		// This is the FTS part
+		queryBuilder.WriteString(fmt.Sprintf(" WHERE search_vector @@ plainto_tsquery('simple', $%d)", argsCounter))
+		args = append(args, searchQuery)
+		argsCounter++
+	}
+
+	queryBuilder.WriteString(fmt.Sprintf(" ORDER BY timestamp DESC LIMIT $%d OFFSET $%d", argsCounter, argsCounter+1))
+	args = append(args, limit, offset)
+
+	getSQL := queryBuilder.String()
+	fmt.Println("Final Query:", getSQL)
+
+	rows, err := db.Query(ctx, getSQL, args...)
 	if err != nil {
 	return nil,	fmt.Errorf("failed to get logs: %w", err)
 	}
