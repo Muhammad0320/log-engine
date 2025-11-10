@@ -58,8 +58,8 @@ func CreateSchema(ctx context.Context, db *pgx.Conn) error {
 	  }
 
 	  createFunctionSQL := `
-	  			CREATE OR REPLACE FUNCTIONS update_log_search_vector()
-				RETURN TRIGGER AS $$
+	  			CREATE OR REPLACE FUNCTION update_log_search_vector()
+				RETURNS TRIGGER AS $$
 				BEGIN
 	  				-- Combine level, service, and message into one text block
 					-- and convert it into a tsvector
@@ -90,6 +90,8 @@ func CreateSchema(ctx context.Context, db *pgx.Conn) error {
 	  if err != nil {
 		return fmt.Errorf("failed to create trigger : %w", err)
 	  }
+	
+	fmt.Println("Database FTS is ready!")  
 	
 	fmt.Println("Database schema is ready!")
 	return nil
