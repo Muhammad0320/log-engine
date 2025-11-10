@@ -11,10 +11,14 @@ import (
 
 type Server struct {
 	db *pgx.Conn
+	logQueue chan <- database.LogEntry
 }
 
-func NewServer (db *pgx.Conn) *Server {
-	return &Server{db: db}
+func NewServer (db *pgx.Conn, logQueue chan <- database.LogEntry) *Server {
+	return &Server{
+		db: db,
+		logQueue: logQueue,
+	}
 }
 
 func (s *Server) Run(addr string)  error {
@@ -43,15 +47,7 @@ func (s *Server) handleLogIngest(c *gin.Context) {
 		return 
 	}
 
-	ctx := c.Request.Context()
-
-	err := database.InsertLog(ctx, s.db, logEntry)
-	if err != nil {
-		fmt.Printf("Failed to insert log: %v\n",  err)
-
-		c.JSON(500, gin.H{"error": "internal server error"})
-		return
-	}
+	s.logQueue <- logEntry
 
 	c.JSON(200, gin.H{"message": "log received!"})
 }
