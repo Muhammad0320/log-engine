@@ -65,7 +65,7 @@ func (h *Hub) Run() {
 
 }
 
-func (h *Hub) BroadCastLog(logEntry database.LogEntry) {
+func (h *Hub) BroadcastLog(logEntry database.LogEntry) {
 
 	b, err := json.Marshal(logEntry)
 	if err != nil {
