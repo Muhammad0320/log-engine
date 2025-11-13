@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"log-engine/internals/database"
+	"log-engine/internals/hub"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -12,12 +13,14 @@ import (
 type Server struct {
 	db *pgx.Conn
 	logQueue chan <- database.LogEntry
+	hub *hub.Hub
 }
 
-func NewServer (db *pgx.Conn, logQueue chan <- database.LogEntry) *Server {
+func NewServer (db *pgx.Conn, logQueue chan <- database.LogEntry, hub *hub.Hub) *Server {
 	return &Server{
 		db: db,
 		logQueue: logQueue,
+		hub: hub,
 	}
 }
 
@@ -36,6 +39,7 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 	{
 		apiv1.POST("/logs", s.handleLogIngest)
 		apiv1.GET("/logs", s.handleGetLogs)
+		apiv1.GET("/logs/ws", s.handleWsLogic)
 	}
 }
 
@@ -78,4 +82,8 @@ func (s *Server) handleGetLogs(c *gin.Context)  {
 	}
 
 	c.JSON(200, gin.H{"logs": logs})
+}
+
+func (s *Server) handleWsLogic(c *gin.Context) {
+	hub.ServeWs(s.hub, c.Writer, c.Request)
 }
