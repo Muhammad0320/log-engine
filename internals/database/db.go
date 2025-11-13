@@ -100,12 +100,18 @@ func CreateSchema(ctx context.Context, db *pgx.Conn) error {
 
 // InsertLog writes a new LogEntry to the database.
 func InsertLog(ctx context.Context, db *pgx.Conn, log LogEntry) error {
+	// I wish there's a ternary expression equivalent in Go
+	var logTime = log.Timestamp
+	if logTime.IsZero() {
+		logTime = time.Now()
+	}
+
 	insertSQL := `
 		INSERT INTO logs (timestamp, level, message, service) 
 		VALUES ($1, $2, $3, $4)`
 
 	_, err := db.Exec(ctx, insertSQL,
-		time.Now(),
+		logTime,
 		log.Level,
 		log.Message,
 		log.Service,
