@@ -78,20 +78,17 @@ func main() {
 	router := gin.Default()
 
 	router.POST("/api/v1/log", func(c *gin.Context) {
-
+		
 		var log LogEntry
-
 		if err := c.BindJSON(&log); err != nil {
 			c.JSON(400, gin.H{
 				"message": "Bad Request",
 			})
 			return
 		}
-
 		fmt.Printf("LOG RECEIVED: %+v\n", log)
 
 		ctx := c.Request.Context()
-
 		insertSql := `
 		INSERT INTO logs (timestamp, level, message, service) VALUES ($1, $2, $3, $4);
 		`

@@ -7,16 +7,23 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/nxadm/tail"
 )
 
 type Log struct {
-	Level string
-	Message string
-	Service string
+	Timestamp time.Time `json:"timestamp,omitempty"`
+	Level string `json:"level"`
+	Service string `json:"service"`
+	Message string `json:"message"`
+	
 }
+
+var logRegex = regexp.MustCompile(`^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+\[(.*?)\]\s+(.*)$`)
+
+const timeLayout = "2006-01-02 15:04:05"
 
 func main() {
 
@@ -33,15 +40,30 @@ func main() {
 	
 	
 	for line := range t.Lines {
-		
-		newLog := Log{Level: "info", Service: "log-agent-v1", Message: line.Text}
+		newLog := Log{Service: "log-agent-v1"}
+
+		matches := logRegex.FindStringSubmatch(line.Text)
+		if matches == nil {
+
+			fmt.Println("Line didn't match pattern, sending as info")
+			newLog.Level = "info"
+			newLog.Message = line.Text
+		} else {
+
+			fmt.Println("Line matched! parsing...")
+			parsedTime, err := time.Parse(timeLayout, matches[1])
+			if err == nil {
+				newLog.Timestamp = parsedTime
+			}
+			newLog.Level = matches[2]
+			newLog.Message = matches[3]
+		}
+
 		jsonData, err := json.Marshal(newLog)
 		if err != nil {
 			fmt.Printf("error marchaling json: %s", err)
 			continue
 		}
-
-
 	// Create a new HTTP request
 	req, err := http.NewRequest("POST", "http://localhost:8080/api/v1/logs", bytes.NewBuffer(jsonData))
 	if err != nil {

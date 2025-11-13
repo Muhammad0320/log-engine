@@ -1,7 +1,4 @@
-2023-11-02 15:30:00 [INFO] User 'john.doe' logged in from IP: 192.168.1.100
-2023-11-02 15:30:05 [DEBUG] Processing request for /api/data with parameters: {id: 123}
-2023-11-02 15:30:10 [WARN] Disk space low on volume C:. Free space: 10%
-2023-11-02 15:30:15 [ERROR] Failed to connect to database 'mydb'. Connection timed out.
-2023-11-02 15:30:20 [INFO] Data successfully retrieved for user 'jane.smith'.
-[INFO] agent: New log entry.
-[INFO] agent: New log entry.
+2025-01-10 09:15:00 [INFO] User 'admin' logged in.
+2025-01-10 09:16:05 [WARN] Low disk space on /var.
+This line is not a real log, it will fail to match.
+2025-01-10 09:17:20 [ERROR] Failed to process payment: 12345
