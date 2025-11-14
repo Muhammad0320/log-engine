@@ -28,9 +28,8 @@ const timeLayout = "2006-01-02 15:04:05"
 
 func main() {
 
-			filePtr := flag.String("f", "test.log", "log file to tail")
+		filePtr := flag.String("f", "test.log", "log file to tail")
 		servicePtr := flag.String("s", "log-agent-v1", "service name to tag logs with")
-
 		flag.Parse()
 
 	client := &http.Client{
