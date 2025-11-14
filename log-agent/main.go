@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -27,13 +28,18 @@ const timeLayout = "2006-01-02 15:04:05"
 
 func main() {
 
+			filePtr := flag.String("f", "test.log", "log file to tail")
+		servicePtr := flag.String("s", "log-agent-v1", "service name to tag logs with")
+
+		flag.Parse()
+
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 
 	fmt.Println("starting to tail test.log")
 	
-	t, err := tail.TailFile("test.log", tail.Config{Follow: true})
+	t, err := tail.TailFile(*filePtr, tail.Config{Follow: true})
 	if err != nil {
 		log.Fatalf("Failed to tail file: %v", err)
 	}
@@ -48,7 +54,7 @@ func main() {
 			fmt.Println("Line didn't match pattern, sending as info")
 			newLog.Level = "info"
 			newLog.Message = line.Text
-			newLog.Service = "log-agent-v1"
+			newLog.Service = *servicePtr
 		} else {
 			fmt.Println("Line matched! parsing...")
 			parsedTime, err := time.Parse(timeLayout, matches[1])
@@ -57,7 +63,7 @@ func main() {
 			}
 
 			if matches[2] == ""{
-				newLog.Service = "log-agent-v1"
+				newLog.Service = *servicePtr
 			} else {
 				newLog.Service = matches[2]
 			}
