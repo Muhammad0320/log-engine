@@ -1,4 +1,9 @@
-2025-01-10 09:15:00 [INFO] User 'admin' logged in.
+2025-01-10 09:15:00 [AUTH] [INFO] User 'admin' logged in.
 2025-01-10 09:16:05 [WARN] Low disk space on /var.
 This line is not a real log, it will fail to match.
 2025-01-10 09:17:20 [ERROR] Failed to process payment: 12345
+2025-11-14 10:00:00 [AUTH] [INFO] User 'test' logged in.
+This is a completely random line of text.
+2025-11-14 10:02:00 [CRITICAL] System shutting down.
+2025-11-14 10:01:00 [DEBUG] This is a debug message.
+A log line with a timestamp but no level.
