@@ -82,7 +82,7 @@ func CreateSchema(ctx context.Context, db *pgx.Conn) error {
 	}
 
 	// Turn it into a Hypertable
-	createHypertableSQL := `SELECT create_hypertable('logs', 'timestamp', if_not_exists => TRUE);`
+	createHypertableSQL := `SELECT create_hypertable('logs', 'timestamp', chunk_time_interval => INTERVAL '1 day' ,if_not_exists => TRUE);`
 	_, err = db.Exec(ctx, createHypertableSQL)
 		if err != nil {
 		return fmt.Errorf("failed to create hypertable: %w", err)
