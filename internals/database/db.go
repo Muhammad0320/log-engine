@@ -207,7 +207,7 @@ func GetLogs(ctx context.Context, db *pgx.Conn, limit int, offset int, searchQue
 }
 
 type User struct {
-	ID string 
+	ID int
 	PasswordHash string
 }
 

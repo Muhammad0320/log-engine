@@ -7,11 +7,9 @@ import (
 	"log-engine/internals/hub"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -43,6 +41,12 @@ func (s *Server) Run(addr string)  error {
 var validate = validator.New()
 
 func (s *Server) registerRoutes(router *gin.Engine) {
+
+	authGroup := router.Group("/auth")
+	{
+		authGroup.POST("/register", s.handleUserRegister)
+		authGroup.POST("/login", s.handleUserLogin)
+	}
 
 	apiv1 := router.Group("/api/v1")
 	{
@@ -126,7 +130,14 @@ func (s *Server) handleUserRegister(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
 	}
 
-c.JSON(http.StatusCreated, gin.H{"message": "user created!", "user_id": newUserId})
+	tokenString, err := auth.CreateJWT(s.jwtSecret, newUserId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create token"})
+		return 
+	}
+	
+
+c.JSON(http.StatusCreated, gin.H{"token": tokenString})
 }
 
 func (s *Server) handleUserLogin(c *gin.Context) {
@@ -157,13 +168,7 @@ func (s *Server) handleUserLogin(c *gin.Context) {
 		return 
 	} 
 
-	claims := jwt.MapClaims{
-		"sub": user.ID,
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(s.jwtSecret)
+	tokenString, err := auth.CreateJWT(s.jwtSecret, user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create token"})
 		return
