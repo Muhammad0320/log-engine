@@ -7,9 +7,11 @@ import (
 	"log-engine/internals/hub"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -17,13 +19,15 @@ type Server struct {
 	db *pgx.Conn
 	logQueue chan <- database.LogEntry
 	hub *hub.Hub
+	jwtSecret string
 }
 
-func NewServer (db *pgx.Conn, logQueue chan <- database.LogEntry, hub *hub.Hub) *Server {
+func NewServer (db *pgx.Conn, logQueue chan <- database.LogEntry, hub *hub.Hub, jwtSecret string) *Server {
 	return &Server{
 		db: db,
 		logQueue: logQueue,
 		hub: hub,
+		jwtSecret:  jwtSecret,
 	}
 }
 
@@ -106,6 +110,11 @@ func (s *Server) handleUserRegister(c *gin.Context) {
 		return
 	}
 
+	if err := validate.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	hash, err := auth.HashPasswod(req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to has password"})
@@ -118,4 +127,47 @@ func (s *Server) handleUserRegister(c *gin.Context) {
 	}
 
 c.JSON(http.StatusCreated, gin.H{"message": "user created!", "user_id": newUserId})
+}
+
+func (s *Server) handleUserLogin(c *gin.Context) {
+
+	var req struct {
+		Email string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": "invalid request body"})
+		return
+	}
+
+		if err := validate.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := database.GetUserByEmail(c.Request.Context(), s.db, req.Email)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		return
+	}
+
+	if err := auth.ComparePasswordHash(req.Password, user.PasswordHash); !err {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		return 
+	} 
+
+	claims := jwt.MapClaims{
+		"sub": user.ID,
+		"iat": time.Now().Unix(),
+		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(s.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create token"})
+		return
+	}
+	
+c.JSON(http.StatusOK, gin.H{"token": tokenString})
 }
