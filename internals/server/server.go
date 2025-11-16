@@ -2,11 +2,14 @@ package server
 
 import (
 	"fmt"
+	"log-engine/internals/auth"
 	"log-engine/internals/database"
 	"log-engine/internals/hub"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -32,6 +35,8 @@ func (s *Server) Run(addr string)  error {
 
 	return router.Run(addr)
 }
+
+var validate = validator.New()
 
 func (s *Server) registerRoutes(router *gin.Engine) {
 
@@ -86,4 +91,31 @@ func (s *Server) handleGetLogs(c *gin.Context)  {
 
 func (s *Server) handleWsLogic(c *gin.Context) {
 	hub.ServeWs(s.hub, c.Writer, c.Request)
+}
+
+func (s *Server) handleUserRegister(c *gin.Context) {
+
+	var req struct {
+		Name string `json:"name" validate:"required,min=2"`
+		Email string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required,min=8"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	hash, err := auth.HashPasswod(req.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to has password"})
+		return 
+	}
+
+	newUserId, err := database.CreateUser(c.Request.Context(), s.db, req.Name, req.Email, hash)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
+	}
+
+c.JSON(http.StatusCreated, gin.H{"message": "user created!", "user_id": newUserId})
 }
