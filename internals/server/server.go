@@ -42,18 +42,19 @@ var validate = validator.New()
 
 func (s *Server) registerRoutes(router *gin.Engine) {
 
-	authGroup := router.Group("/auth")
+	apiv1 := router.Group("/api/v1")
+	authGroup := apiv1.Group("/auth")
 	{
 		authGroup.POST("/register", s.handleUserRegister)
 		authGroup.POST("/login", s.handleUserLogin)
 	}
 
-	apiv1 := router.Group("/api/v1")
-	apiv1.Use(s.authMiddleware())
+	logGroups := apiv1.Group("/logs")	
+	logGroups.Use(s.authMiddleware())
 	{
-		apiv1.POST("/logs", s.handleLogIngest)
-		apiv1.GET("/logs", s.handleGetLogs)
-		apiv1.GET("/logs/ws", s.handleWsLogic)
+		logGroups.POST("", s.handleLogIngest)
+		logGroups.GET("", s.handleGetLogs)
+		logGroups.GET("/ws", s.handleWsLogic)
 	}
 }
 
