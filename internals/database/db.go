@@ -164,7 +164,7 @@ func InsertLog(ctx context.Context, db *pgx.Conn, log LogEntry) error {
 	return nil
 }
 
-func GetLogs(ctx context.Context, db *pgx.Conn, limit, projectID, offset int, searchQuery string) ([]LogEntry, error) { 
+func GetLogs(ctx context.Context, db *pgx.Conn,  projectID ,limit, offset int, searchQuery string) ([]LogEntry, error) { 
 
 	args := make([]interface{}, 0)
 	argsCounter := 1
@@ -255,7 +255,6 @@ func GetProductByApiKey(ctx context.Context, db *pgx.Conn, apiKey string) (Proje
 		return project, fmt.Errorf("failed to gett project: %w", err)
 	}
 
-
 	return  project, nil 
 }
 
@@ -267,3 +266,17 @@ func CheckProjectIDOwners(ctx context.Context, db *pgx.Conn, userID, projectID i
 
 	return  exists, err
 }
+
+func CreateProject(ctx context.Context, db *pgx.Conn, userID int, name, apiKey, apiSecretHash string) (int, error) {
+	var projectID int 
+
+	err := db.QueryRow(ctx, `
+	INSERT INTO projects (name, api_key, api_secret_hash) VALUES ($1, $2, $3) RETURNING id
+	`, name, apiKey, apiSecretHash).Scan(&projectID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return projectID, nil 	
+}
+
