@@ -154,7 +154,7 @@ func InsertLog(ctx context.Context, db *pgx.Conn, log LogEntry) error {
 		log.Level,
 		log.Message,
 		log.Service,
-		log.ProjectID
+		log.ProjectID,
 	)
 	
 	if err != nil {
@@ -173,7 +173,7 @@ func GetLogs(ctx context.Context, db *pgx.Conn, limit, projectID, offset int, se
 	queryBuilder.WriteString(fmt.Sprintf(`SELECT timestamp, level, message, service 
 		FROM logs WHERE project_id = $%d`, argsCounter))
 	args = append(args, projectID)
-	args++
+	argsCounter++
 
 	// Conditionally add the WHERE clause for search
 	if searchQuery != "" {
@@ -257,4 +257,13 @@ func GetProductByApiKey(ctx context.Context, db *pgx.Conn, apiKey string) (Proje
 
 
 	return  project, nil 
+}
+
+func CheckProjectIDOwners(ctx context.Context, db *pgx.Conn, userID, projectID int) (bool, error) {
+	var exists bool 
+	err := db.QueryRow(ctx, `
+	SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1 AND user_id = $2)
+	`, projectID, userID).Scan(&exists) 
+
+	return  exists, err
 }
