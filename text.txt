@@ -6,3 +6,8 @@ There are 10 types of people in the world: those who understand binary, and thos
 Debugging: Removing the needles from the haystack, then realizing you put them there yourself.
 
 My code doesn't have bugs, it has unexpected features.
+
+
+Now I git a different error message, I think it's because you moved the env file:  No .env file found, using environent variables
+2025/11/18 05:32:04 FATAL: JWT_SECRET environment variable is not set
+exit status 1

@@ -93,7 +93,7 @@ func main() {
 
 	req.Header.Set("X-Api-Key", *apiKeyPtr)
 	req.Header.Set("Authorization", "Bearer "+*secretKeyPtr)
-
+	
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Printf("Error sending request: %v\n", err)

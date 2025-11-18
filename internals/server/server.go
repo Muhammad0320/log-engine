@@ -178,11 +178,15 @@ func (s *Server) handleUserRegister(c *gin.Context) {
 
 	newUserId, err := database.CreateUser(c.Request.Context(), s.db, req.Name, req.Email, hash)
 	if err != nil {
+		fmt.Printf("this is the error from user -----%s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
+		return
 	}
-
+	
+	
 	tokenString, err := auth.CreateJWT(s.jwtSecret, newUserId)
 	if err != nil {
+		fmt.Printf("this is the error from token ----- %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create token"})
 		return 
 	}
