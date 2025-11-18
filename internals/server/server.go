@@ -5,6 +5,7 @@ import (
 	"log-engine/internals/auth"
 	"log-engine/internals/database"
 	"log-engine/internals/hub"
+	"log-engine/internals/utils"
 	"net/http"
 	"strconv"
 
@@ -219,4 +220,46 @@ func (s *Server) handleUserLogin(c *gin.Context) {
 	}
 	
 c.JSON(http.StatusOK, gin.H{"token": tokenString})
+}
+
+func (s *Server) handleCreateProject(c *gin.Context) {
+
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(401, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	var req struct {
+		Name string `json:"name" validate:"required,min=3"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "Bad request"})
+		return	
+	}
+
+	randkey, _ := utils.GenerateRandomString(16)
+	apiKey := "pk_live_" + randkey
+
+	randSecret, _ := utils.GenerateRandomString(16) 
+	apiSecret := "sk_live_" + randSecret
+
+	secretHash, err := auth.HashPasswod(apiSecret)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "failed to secure peoject keys"})
+	}
+
+	projectID, err := database.CreateProject(c, s.db, userID.(int), req.Name, apiKey, secretHash)
+	if err != nil {
+		c.JSON(500, gin.H{"error":  "failed to create project"})
+		return
+	}
+
+	c.JSON(201, gin.H{
+		"message": "project created",
+		"project_id": projectID,
+		"api_key": apiKey,
+		"api_secret": apiSecret, // This is the first and last time to send the api key 
+	})
 }
