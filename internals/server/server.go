@@ -50,16 +50,22 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 		authGroup.POST("/login", s.handleUserLogin)
 	}
 
-	// For the Loading Dock
-	apiv1.POST("/logs", s.apiKeyAuthMiddleware() ,s.handleLogIngest)
-
+	
 	// For our Control Room
-	logGroups := apiv1.Group("/logs")	
-	logGroups.Use(s.authMiddleware())
+	protected := apiv1.Group("")
+	protected.Use(s.authMiddleware())
 	{
-		logGroups.GET("", s.handleGetLogs)
-		logGroups.GET("/ws", s.handleWsLogic)
+		// Projects
+		protected.POST("/projects", s.handleCreateProject)
+		protected.GET("/projects", s.handleListProjects)
+
+		// Logs
+		protected.GET("logs", s.handleGetLogs)
+		protected.GET("logs/ws", s.handleWsLogic)
 	}
+	
+	// For the Loading Dock (Agent route)
+	apiv1.POST("/logs", s.apiKeyAuthMiddleware() ,s.handleLogIngest)
 }
 
 func (s *Server) handleLogIngest(c *gin.Context) {
