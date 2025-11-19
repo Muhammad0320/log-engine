@@ -24,6 +24,7 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] == "Bearer" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
+			return 
 		}
 		tokenString := parts[1]
 
@@ -32,7 +33,7 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return  nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
-			return s.jwtSecret, nil
+			return []byte(s.jwtSecret), nil
 		})
 		
 		if err != nil {
@@ -43,6 +44,7 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok || !token.Valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token claims"})
+			return 
 		}
 		
 		userIDFloat, ok := claims["sub"].(float64)
