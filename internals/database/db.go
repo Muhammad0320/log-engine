@@ -2,12 +2,16 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
+
+var EmailExists = errors.New("email already exists")
 
 // LogEntry struct now lives here, as it defines our database model.
 type LogEntry struct {
@@ -221,7 +225,14 @@ func CreateUser(ctx context.Context, db *pgx.Conn, name, email, hashpassword str
 		`INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id`,
 		name, email, hashpassword,
 	).Scan(&newUserID)
+	
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" {
+				return 0, EmailExists
+			}
+		}
 		return 0, fmt.Errorf("failed to create user: %w", err)
 	}
 
