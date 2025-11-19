@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"log-engine/internals/auth"
 	"log-engine/internals/database"
@@ -178,7 +179,12 @@ func (s *Server) handleUserRegister(c *gin.Context) {
 
 	newUserId, err := database.CreateUser(c.Request.Context(), s.db, req.Name, req.Email, hash)
 	if err != nil {
-		fmt.Printf("this is the error from user -----%s", err)
+		if errors.Is(err, database.EmailExists) {
+			c.JSON(http.StatusConflict, gin.H{"error": "this email is already registered"})
+			return
+		}
+
+		fmt.Printf("Internal error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
 		return
 	}
@@ -186,7 +192,6 @@ func (s *Server) handleUserRegister(c *gin.Context) {
 	
 	tokenString, err := auth.CreateJWT(s.jwtSecret, newUserId)
 	if err != nil {
-		fmt.Printf("this is the error from token ----- %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create token"})
 		return 
 	}
