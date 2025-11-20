@@ -63,6 +63,7 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 
 		// Logs
 		protected.GET("logs", s.handleGetLogs)
+		protected.GET("logs/stats", s.handleGetStats)
 		protected.GET("logs/ws", s.handleWsLogic)
 	}
 	

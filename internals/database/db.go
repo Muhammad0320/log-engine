@@ -371,3 +371,45 @@ func GetLogStats(ctx context.Context, db *pgxpool.Pool, projectID int, fromTime,
 
 	return  stats, nil 
 } 
+
+type LogSummary struct {
+	TotalLogs int `json:"total_logs"`
+	ErrorCount int `json:"error_count"`
+	ServiceCount int `json:"service_count"`
+	ErrorRate float64 `json:"error_rate"`
+}
+
+func GetlogSummary(ctx context.Context, db *pgxpool.Pool, projectID int, fromTime, toTime time.Time) (LogSummary, error) {
+	var summary LogSummary
+	
+	query := `
+		WITH subset AS (
+		SELECT level, service
+		FROM logs
+		WHERE project_id = $1
+		  AND timestamp >= $2
+		  AND timestamp <= $3
+	) 
+	SELECT 
+		COUNT(*) as total,
+		COUNT(*) FILTER (WHERE level ILIKE 'error' OR level ILIKE 'critical') as errors,
+		COUNT(DISTICT service) as services
+	FROM subset;
+	`
+
+	err := db.QueryRow(ctx, query, projectID, fromTime, toTime).Scan(
+		&summary.TotalLogs, &summary.ErrorCount, &summary.ServiceCount,
+	)
+
+	if err != nil {
+		return  summary, err
+	}
+
+	if summary.TotalLogs > 0 {
+		summary.ErrorRate = ( float64(summary.ErrorCount) / float64(summary.TotalLogs)) * 100
+	} else {
+		summary.ErrorRate = 0
+	}
+
+	return summary, nil 
+}
