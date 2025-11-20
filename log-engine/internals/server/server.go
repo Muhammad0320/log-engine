@@ -176,7 +176,33 @@ func (s *Server) handleGetLogs(c *gin.Context)  {
 }
 
 func (s *Server) handleWsLogic(c *gin.Context) {
-	hub.ServeWs(s.hub, c.Writer, c.Request)
+
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(401, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	projectIDStr := c.Query("project_id")
+	projectID, err := strconv.Atoi(projectIDStr)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invaid project_id "})
+		return
+	}
+
+	isOwner, err := database.CheckProjectIDOwners(c.Request.Context(), s.db, userID.(int), projectID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "internal error"})
+		return 
+	}
+
+	if !isOwner {
+		c.JSON(403, gin.H{"error": "You are not allowed to perform this action"})
+		return
+	}
+
+
+	hub.ServeWs(s.hub, c.Writer, c.Request, projectID, userID.(int))
 }
 
 func (s *Server) handleUserRegister(c *gin.Context) {
