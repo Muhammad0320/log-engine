@@ -14,6 +14,7 @@ import (
 // Conteol Room Guard
 func (s *Server) authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		tokenString := ""
 
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -21,13 +22,21 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 			return 
 		}
 
-		
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
+		if authHeader != "" { 
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 || parts[0] == "Bearer" {
+				tokenString = parts[1]
+			}
+		}
+
+		if tokenString == "" {
+			tokenString = c.Query("token")
+		}
+
+		if tokenString == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authorization required"})
 			return 
 		}
-		tokenString := parts[1]
 
 		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error)  {
 
