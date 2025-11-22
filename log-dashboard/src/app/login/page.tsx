@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import styled from "styled-components";
 import { loginAction } from "@/actions/auth";
 import { AuthFormState } from "@/lib/definitions"; // Import our Type
 import { FieldError, GlobalError } from "@/components/ui/formErrors";
+import { useToast } from "@/providers/ToastProvider";
 
 const Container = styled.div`
   height: 100vh;
@@ -95,14 +96,21 @@ export default function LoginPage() {
     FormData
   >(loginAction, initialState);
 
+  const toast = useToast();
+
+  useEffect(() => {
+    if (state.errors._form && state.errors._form.length > 0) {
+      toast.error(state.errors._form[0]);
+    }
+    if (state.message) {
+      toast.success(state.message);
+    }
+  }, [state, toast]);
+
   return (
     <Container>
       <Card action={formAction}>
         <Title>LogEngine Access</Title>
-
-        {/* Global Errors (_form) */}
-        <GlobalError errors={state.errors._form} />
-
         <FormGroup>
           <Label htmlFor="email">Email</Label>
           <Input
