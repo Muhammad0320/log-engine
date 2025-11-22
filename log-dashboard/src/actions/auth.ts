@@ -1,3 +1,5 @@
+"use server";
+
 import { fetchClient } from "@/lib/client";
 import {
   AuthFormState,
@@ -7,8 +9,6 @@ import {
 import { setSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-const API_URL = "http://localhost:8080/api/v1";
 
 interface AuthResponse {
   token: string;
@@ -92,6 +92,11 @@ export async function registerAction(
       errors: { _form: ["Failed to connect to the server. Please try again!"] },
     };
   }
+
+  return {
+    errors: {},
+    message: "Registration Successful!",
+  };
 
   redirect("/");
 }
