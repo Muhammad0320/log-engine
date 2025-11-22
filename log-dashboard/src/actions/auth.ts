@@ -1,12 +1,18 @@
+import { fetchClient } from "@/lib/client";
 import {
   AuthFormState,
   LoginFormSchema,
   RegisterFormSchema,
 } from "@/lib/definitions";
 import { setSession } from "@/lib/session";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 const API_URL = "http://localhost:8080/api/v1";
+
+interface LoginResponse {
+  token: string;
+}
 
 export async function loginAction(
   prevState: AuthFormState,
@@ -26,28 +32,17 @@ export async function loginAction(
   const { email, password } = validatedSchema.data;
 
   try {
-    const res = await fetch(`${API_URL}/auth/login`, {
+    const data = await fetchClient<LoginResponse>("/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      return {
-        errors: {
-          _form: [data.error || "Invalid credentials"],
-        },
-      };
-    }
 
     await setSession(data.token);
   } catch (error) {
     if (error instanceof Error) {
       return {
         errors: {
-          _form: [error.message],
+          _form: [error.message || "Invalid credentials"],
         },
       };
     }
@@ -56,6 +51,7 @@ export async function loginAction(
     };
   }
 
+  revalidatePath("/");
   redirect("/");
 }
 
