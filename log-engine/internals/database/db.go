@@ -67,8 +67,10 @@ CREATE TABLE IF NOT EXISTS users (
 			name VARCHAR(255) UNIQUE NOT NULL,
 			api_key VARCHAR(255) UNIQUE NOT NULL,
 			api_secret_hash VARCHAR(255) NOT NULL,
-			created_at TIMESTAMPTZ DEFAULT NOW()
-		)
+			created_at TIMESTAMPTZ DEFAULT NOW(),
+			UNIQUE(user_id, name)
+		);
+		CREATE INDEX IF NOT EXISTS idx_projects_api_key ON projects(api_key);
 	`
 	_, err = db.Exec(ctx, createProjectTableSQL)
 	if err != nil {
