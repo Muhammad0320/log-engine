@@ -232,7 +232,7 @@ func (s *Server) handleUserRegister(c *gin.Context) {
 	newUserId, err := database.CreateUser(c.Request.Context(), s.db, req.Name, req.Email, hash)
 	if err != nil {
 		if errors.Is(err, database.EmailExists) {
-			c.JSON(http.StatusConflict, gin.H{"error": "this email is already registered"})
+			c.JSON(http.StatusConflict, gin.H{"error": "409 Confilict: this email is already registered"})
 			return
 		}
 
@@ -295,8 +295,6 @@ func (s *Server) handleCreateProject(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("The user id ------------: %v\n", userID.(int))
-
 	var req struct {
 		Name string `json:"name" validate:"required,min=3"`
 	}
@@ -319,7 +317,11 @@ func (s *Server) handleCreateProject(c *gin.Context) {
 
 	projectID, err := database.CreateProject(c.Request.Context(), s.db, userID.(int), req.Name, apiKey, secretHash)
 	if err != nil {
-		fmt.Printf("Internal Error ------------ : %v\n", err)
+		if errors.Is(err, database.NameExists){
+			c.JSON(409, gin.H{"error": "409 Conflict: project name already exists"})
+			return
+		}
+
 		c.JSON(500, gin.H{"error":  "failed to create project"})
 		return
 	}
