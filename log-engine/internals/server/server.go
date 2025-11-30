@@ -19,16 +19,18 @@ import (
 
 type Server struct {
 	db *pgxpool.Pool
-	ingestEngine ingest.IngestionEngine
+	ingestEngine *ingest.IngestionEngine
 	hub *hub.Hub
+	authCache *auth.AuthCache
 	jwtSecret string
 }
 
-func NewServer (db *pgxpool.Pool, ingestEngine ingest.IngestionEngine, hub *hub.Hub, jwtSecret string) *Server {
+func NewServer (db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.Hub, authCache *auth.AuthCache , jwtSecret string) *Server {
 	return &Server{
 		db: db,
 		ingestEngine: ingestEngine,
 		hub: hub,
+		authCache: authCache,
 		jwtSecret:  jwtSecret,
 	}
 }
@@ -116,7 +118,7 @@ func (s *Server) handleLogIngest(c *gin.Context) {
 	 }
 
 	 s.ingestEngine.LogQueue <- logEntry
-	
+	 
 	c.JSON(202, gin.H{"message": "log received!"})
 }
 
