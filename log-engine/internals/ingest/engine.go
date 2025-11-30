@@ -21,15 +21,15 @@ const (
 
 type IngestionEngine struct {
 	db *pgxpool.Pool 
-	wal *WAL
+	Wal *WAL
 	hub *hub.Hub
 	LogQueue chan database.LogEntry
 }
 
 func NewIngestionEngine(db *pgxpool.Pool, wal *WAL, h *hub.Hub) *IngestionEngine {
 	return &IngestionEngine{
-		db: db, 
-		wal: wal, 
+		db: db,
+		Wal: wal, 
 		hub: h,
 		LogQueue: make(chan database.LogEntry, QueueSize),
 	}

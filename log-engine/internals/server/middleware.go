@@ -99,7 +99,6 @@ func (s *Server) apiKeyAuthMiddleware() gin.HandlerFunc {
 		}
 
 		c.Set("projectID", project.ID)
-
 		c.Next()
 	}
 }

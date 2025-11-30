@@ -6,6 +6,7 @@ import (
 	"log-engine/internals/auth"
 	"log-engine/internals/database"
 	"log-engine/internals/hub"
+	"log-engine/internals/ingest"
 	"log-engine/internals/utils"
 	"net/http"
 	"strconv"
@@ -18,15 +19,15 @@ import (
 
 type Server struct {
 	db *pgxpool.Pool
-	logQueue chan <- database.LogEntry
+	ingestEngine ingest.IngestionEngine
 	hub *hub.Hub
 	jwtSecret string
 }
 
-func NewServer (db *pgxpool.Pool, logQueue chan <- database.LogEntry, hub *hub.Hub, jwtSecret string) *Server {
+func NewServer (db *pgxpool.Pool, ingestEngine ingest.IngestionEngine, hub *hub.Hub, jwtSecret string) *Server {
 	return &Server{
 		db: db,
-		logQueue: logQueue,
+		ingestEngine: ingestEngine,
 		hub: hub,
 		jwtSecret:  jwtSecret,
 	}
@@ -94,25 +95,28 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 }
 
 func (s *Server) handleLogIngest(c *gin.Context) {
-	var logEntry database.LogEntry
+	ProjectID := c.GetInt("ProjectID")
 
+	var logEntry database.LogEntry
 	if err:= c.BindJSON(&logEntry); err != nil {
 		c.JSON(400, gin.H{"error": "bad request"})
 		return 
 	};
 
-	projectID, exists := c.Get("projectID")
-	if !exists {
-		c.JSON(500, gin.H{"error": "unauthorized context"})
-		return
-	}
+	// Enrich 
+	 logEntry.ProjectID = ProjectID
+	 if logEntry.Timestamp.IsZero() {
+		logEntry.Timestamp = time.Now()
+	 }
 
-	logEntry.ProjectID = projectID.(int)
+	//  WAL (DURABILITY)
+	 if err := s.ingestEngine.Wal.WriteLog(logEntry); err != nil {
+		c.JSON(500, gin.H{"error": "durability failure"})
+		return 
+	 }
 
-	fmt.Println("Logs reach here? ")
-
-	s.logQueue <- logEntry
-
+	 s.ingestEngine.LogQueue <- logEntry
+	
 	c.JSON(202, gin.H{"message": "log received!"})
 }
 
