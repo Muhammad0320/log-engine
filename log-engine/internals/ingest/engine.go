@@ -39,10 +39,44 @@ func (e *IngestionEngine) Start(ctx context.Context) {
 
 	fmt.Printf("Staring ingesting engine with %d workers", WorkerCount)
 	for i := range WorkerCount {
+	  go e.worker(ctx, i)
+	}
+
+}
+
+func (e *IngestionEngine) worker(ctx context.Context, id int) {
+
+	batch := make([]database.LogEntry, 0, BatchSize)
+
+	ticker := time.NewTicker(FlushInterval)
+	defer ticker.Stop()
+
+	for {
+
+		select {
+		case entry := <- e.LogQueue: 
+			batch = append(batch, entry) 
+
+			if len(batch) >= BatchSize {
+				e.flush(ctx, batch)
+				batch = batch[:0]
+			}
+		case <- ticker.C:
+			if len(batch) > 0 {
+				e.flush(ctx, batch)
+				batch = batch[:0]
+			}
+		case <- ctx.Done(): 
+			if len(batch) > 0 {
+				e.flush(ctx, batch)
+			}
+			return
+		}
 
 	}
 
 }
+
 
 func (e *IngestionEngine) flush(ctx context.Context, batch []database.LogEntry) {
 
