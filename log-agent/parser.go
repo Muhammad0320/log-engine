@@ -50,10 +50,12 @@ type JsonParser struct {
 	Service string 
 }
 
+func NewJsonParser(service string) *JsonParser {
+	return &JsonParser{Service: service}
+}
 
 func (p *JsonParser) Parser(line string) (Log, error) {
 	var l Log 	
-
 	if err := json.Unmarshal([]byte(line), &l); err != nil {
 		return Log{}, err
 	}
