@@ -1,6 +1,9 @@
 package ingest
 
-import "expvar"
+import (
+	"expvar"
+	"sync/atomic"
+)
 
 var (
 
@@ -9,16 +12,24 @@ var (
 	mQueued = expvar.NewInt("ingest_logs_queued_total")
 	mFlushed = expvar.NewInt("ingest_logs_written_total")
 	mErrors = expvar.NewInt("ingest_errors_total")
+	mDropped = expvar.NewInt("ingest_logs_dropped_total")
 	
 	// Gauges (Go up and down)
-	// We handle queue depth dynamically, we don't need a variable here
+	// we use atomic int64 becaue expvar.Int doesn't have it. 
+	activeWorkers int64 
 )
 
-
-func RecordReceived(count int) {
-	mReceived.Add(int64(count))
+func init() {
+	expvar.Publish("ingest_active_workers", expvar.Func( func() any {
+		return atomic.LoadInt64(&activeWorkers)
+	}))
 }
 
-func RecordError() {
-	mErrors.Add(1)
-}
+func RecordReceived(n int) { mReceived.Add(int64(n)) }
+func RecordQueued(n int) { mQueued.Add(int64(n)) }
+func RecordFlushed(n int) {mFlushed.Add(int64(n)) }
+func RecordDropped(n int) {mDropped.Add(int64(n))}
+func RecordError() { mErrors.Add(1) }
+
+func WorkerWake() {atomic.AddInt64(&activeWorkers, 1)}
+func WorkerSleep() {atomic.AddInt64(&activeWorkers, -1)}
