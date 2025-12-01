@@ -109,7 +109,7 @@ func (s *Server) handleLogIngest(c *gin.Context) {
 
 	ingest.RecordReceived(len(logEntries))
 
-	// Enrich 
+	// Enrichments
 	for _, entry := range logEntries {
 	 entry.ProjectID = ProjectID
 	 if entry.Timestamp.IsZero() {

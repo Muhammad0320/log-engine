@@ -2,10 +2,12 @@ package ingest
 
 import (
 	"context"
+	"expvar"
 	"fmt"
 	"log"
 	"log-engine/internals/database"
 	"log-engine/internals/hub"
+	"log-engine/internals/ingest"
 	"sync"
 	"time"
 
@@ -39,7 +41,11 @@ func NewIngestionEngine(db *pgxpool.Pool, wal *WAL, h *hub.Hub) *IngestionEngine
 
 func (e *IngestionEngine) Start(ctx context.Context) {
 	fmt.Printf("Staring ingesting engine with %d workers", WorkerCount)
-	
+
+	expvar.Publish("ingest_queue_depth", expvar.Func(func() interface{} {
+		return len(e.LogQueue)
+	}))
+
 	// Tell the Tracker how many workers we're hiring
 	e.wg.Add(WorkerCount)
 	for i := range WorkerCount {
@@ -70,7 +76,9 @@ func (e *IngestionEngine) worker(ctx context.Context, id int) {
 			batch = append(batch, entry) 
 
 			if len(batch) >= BatchSize {
+				ingest.WorkerWake()
 				e.flush(ctx, batch)
+				ingest.WorkerSleep()
 				batch = batch[:0]
 			}
 		case <- ticker.C:
@@ -111,8 +119,11 @@ func (e *IngestionEngine) flush(ctx context.Context, batch []database.LogEntry) 
 	)
 	if err != nil {
 		log.Printf("⚠️ BATCH INSERT FAILED %s", err)
+		RecordError() 
 		return
 	}
+
+	mFlushed.Add(int64(len(batch)))
 
 	for _, row := range batch {
 		e.hub.BroadcastLog(row)
