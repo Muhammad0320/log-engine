@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"expvar"
 	"fmt"
 	"log-engine/internals/auth"
 	"log-engine/internals/database"
@@ -90,6 +91,7 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 		protected.GET("logs/stats", s.handleGetStats)
 		protected.GET("logs/summary", s.handleGetSummary)
 		protected.GET("logs/ws", s.handleWsLogic)
+		protected.GET("/debug/vars", gin.WrapH(expvar.Handler()))
 	}
 	
 	// For the Loading Dock (Agent route)
@@ -105,6 +107,8 @@ func (s *Server) handleLogIngest(c *gin.Context) {
 		return 
 	};
 
+	ingest.RecordReceived(len(logEntries))
+
 	// Enrich 
 	for _, entry := range logEntries {
 	 entry.ProjectID = ProjectID
@@ -114,6 +118,7 @@ func (s *Server) handleLogIngest(c *gin.Context) {
 
 	//  WAL (DURABILITY)
 	 if err := s.ingestEngine.Wal.WriteLog(entry); err != nil {
+		ingest.RecordError()
 		c.JSON(500, gin.H{"error": "durability failure"})
 		return 
 	 }
