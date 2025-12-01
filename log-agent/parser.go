@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"regexp"
 	"time"
 )
@@ -44,3 +45,27 @@ func (p *RegexParser) Parse(line string) (Log, error) {
 	return l, nil 
 }
 
+// -- Strategy 2: JSON Parser ---
+type JsonParser struct {
+	Service string 
+}
+
+
+func (p *JsonParser) Parser(line string) (Log, error) {
+	var l Log 	
+
+	if err := json.Unmarshal([]byte(line), &l); err != nil {
+		return Log{}, err
+	}
+
+	// Fill the damn gaps
+	if l.Service == "" {
+		l.Service = p.Service
+	}
+	
+	if l.Level == "" {
+		l.Level = "info"
+	}
+
+	return l, nil 
+}
