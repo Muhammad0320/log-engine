@@ -30,6 +30,7 @@ func main() {
 
 	filePtr := flag.String("f", "test.log", "log file to tail")
 	servicePtr := flag.String("s", "log-agent-v1", "service name to tag logs with")
+	formarPtr := flag.String("format", "regex", "Log format: 'regex' or 'json' ")
 	apiKeyPtr := flag.String("pk", "", "Public API key (pk_live_...)")	
 	secretKeyPtr := flag.String("sk", "", "Secret API key (pk_live_...)")	
 
@@ -38,6 +39,16 @@ func main() {
 	if *apiKeyPtr == "" || *secretKeyPtr == "" {
 		log.Fatal("Error: you must provide both pk ans sk flags")
 	} 
+
+	var parser Parser
+	switch *formarPtr {
+	case "regex":
+		parser = NewRegexParser(*servicePtr)
+	case "json":
+		parser = NewJsonParser(*servicePtr)
+	default:
+		log.Fatalf("FATAL: Unknow format '%s'", *formarPtr)
+	}
 
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -53,6 +64,8 @@ func main() {
 	var batch []Log
 	batchSize := 50 
 	flushInterval := 1 * time.Second
+
+
 
 	flush := func () {
 		if len(batch) == 0 {return} 
@@ -76,7 +89,11 @@ func main() {
 	} else {
 		io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
-		fmt.Printf("✅ Sent batch of %d logs. Status: %d\n", len(batch))
+		if resp.StatusCode >= 400 {
+			fmt.Printf("⚠️ Server error %d\n", resp.StatusCode)
+		} else {	
+			fmt.Printf("✅ Sent batch of %d logs.", len(batch))
+		}
 	}
 
 	batch = batch[:0]
@@ -84,41 +101,24 @@ func main() {
 	ticker := time.NewTicker(flushInterval)
 	defer ticker.Stop()
 
+	fmt.Printf("Agent started.  Watching %s [%s mode]...\n", *filePtr, *formarPtr)
+
 	for  {
 	   select {
 	   case line, ok := <- t.Lines:
 			if !ok {return}
 			
-			newLog := Log{}
-			matches := logRegex.FindStringSubmatch(line.Text)
-
-			if matches == nil {
-				newLog.Level = "info"
-				newLog.Message = line.Text
-				newLog.Service = *servicePtr
-			} else {
-
-				parsedTime, err := time.Parse(timeLayout, matches[1])
-				if err == nil {
-					newLog.Timestamp = parsedTime
-				}
-
-				if matches[2] == "" {
-					newLog.Service = *servicePtr
-				} else {
-					newLog.Service = matches[2]
-				}
-
-				newLog.Level = matches[3]
-				newLog.Message = matches[4]
-
+			parsedLogs, err := parser.Parse(line.Text)
+			if err != nil {
+				fmt.Printf("Parse Error: %v\n", err)
+				continue
 			}
-			batch = append(batch, newLog)
-
+			
+			batch = append(batch, parsedLogs)
 			if len(batch) >= batchSize {
 				flush()
 			}
-			
+
 		case <- ticker.C: 
 			flush()
 	   }
