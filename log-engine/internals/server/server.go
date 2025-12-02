@@ -105,7 +105,6 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 func (s *Server) handleLogIngest(c *gin.Context) {
 	ProjectID := c.GetInt("projectID")
 
-	fmt.Printf("DEBUG ------------------ : Handling logs for project ID: %d\n", ProjectID)
 
 	var logEntries []database.LogEntry
 	if err:= c.BindJSON(&logEntries); err != nil {
@@ -116,25 +115,29 @@ func (s *Server) handleLogIngest(c *gin.Context) {
 	ingest.RecordReceived(len(logEntries))
 
 	// Enrichments
-	for _, entry := range logEntries {
-	 entry.ProjectID = ProjectID
-	 if entry.Timestamp.IsZero() {
-		entry.Timestamp = time.Now()
+	for i := range logEntries {
+	 logEntries[i].ProjectID = ProjectID
+	 if logEntries[i].Timestamp.IsZero() {
+		logEntries[i].Timestamp = time.Now()
 	 }
+	}
 
 	//  WAL (DURABILITY)
-	 if err := s.ingestEngine.Wal.WriteLog(entry); err != nil {
+	 if err := s.ingestEngine.Wal.WriteBatch(logEntries); err != nil {
 		ingest.RecordError()
 		ingest.RecordDropped(1) 
 		c.JSON(500, gin.H{"error": "durability failure"})
 		return 
 	 }
 
-	 s.ingestEngine.LogQueue <- entry 
-	 ingest.RecordQueued(1)
+	 for _, entry := range logEntries {
+		 s.ingestEngine.LogQueue <- entry 
+		 ingest.RecordQueued(1)
 	}
-	c.JSON(202, gin.H{"message": "log received!"})
+	 c.JSON(202, gin.H{"message": "log received!"})
 }
+	
+
 
 
 func (s *Server) handleGetLogs(c *gin.Context)  {

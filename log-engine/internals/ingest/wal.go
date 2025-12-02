@@ -46,7 +46,7 @@ func (w *WAL) WriteLog(entry database.LogEntry) error {
 	return  nil 
 }
 
-func (w *WAL) WiteBatch(entries []database.LogEntry) error {
+func (w *WAL) WriteBatch(entries []database.LogEntry) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
