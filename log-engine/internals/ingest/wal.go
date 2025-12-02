@@ -1,6 +1,7 @@
 package ingest
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log-engine/internals/database"
@@ -43,6 +44,34 @@ func (w *WAL) WriteLog(entry database.LogEntry) error {
 	}
 
 	return  nil 
+}
+
+func (w *WAL) WiteBatch(entries []database.LogEntry) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	var buffer bytes.Buffer
+	buffer.Grow(len(entries) * 150)
+
+	for _, entry := range entries {
+		data, err := json.Marshal(entry) 
+		if err != nil {
+			return fmt.Errorf("wal marshal error: %w", err)
+		}
+		buffer.Write(data)
+		buffer.WriteByte('\n')
+	}
+
+	if _, err := w.file.Write(buffer.Bytes()); err != nil {
+		return fmt.Errorf("wal write error: %w", err)
+	}
+
+	// Sync (The paranoid step)
+	if err := w.file.Sync(); err != nil {
+		return fmt.Errorf("wal sync error: %w", err)
+	}
+
+	return nil 
 }
 
 func (w *WAL) Close() error {
