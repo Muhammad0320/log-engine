@@ -32,9 +32,9 @@ type AuthCache struct {
 	db *pgxpool.Pool
 }
 
-func NewAuthtCache(db *pgxpool.Pool) *AuthCache {
+func NewAuthCache(db *pgxpool.Pool) *AuthCache {
 	c := &AuthCache{db: db} 
-	for i := 0; i < ShardCount; i++ {
+	for i := range ShardCount {
 		c.shards[i] = &CasheShard{
 			items: make(map[string]ProjectCacheEntry),
 		}
@@ -50,7 +50,7 @@ func (c *AuthCache) getShard(apiKey string) *CasheShard {
 }
 
 func (c *AuthCache) ValidateAPIKey(ctx context.Context, apiKey, apiSecret string) (int, bool) {
-
+    
 	// Step 1: Check RAM (fast path)
 	shard := c.getShard(apiKey) 
 	
