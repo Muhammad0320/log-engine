@@ -7,7 +7,6 @@ import (
 	"log"
 	"log-engine/internals/database"
 	"log-engine/internals/hub"
-	"log-engine/internals/ingest"
 	"sync"
 	"time"
 
@@ -45,7 +44,7 @@ func (e *IngestionEngine) Start(ctx context.Context) {
 	expvar.Publish("ingest_queue_depth", expvar.Func(func() interface{} {
 		return len(e.LogQueue)
 	}))
-
+	
 	// Tell the Tracker how many workers we're hiring
 	e.wg.Add(WorkerCount)
 	for i := range WorkerCount {
@@ -76,19 +75,23 @@ func (e *IngestionEngine) worker(ctx context.Context, id int) {
 			batch = append(batch, entry) 
 
 			if len(batch) >= BatchSize {
-				ingest.WorkerWake()
+				WorkerWake()
 				e.flush(ctx, batch)
-				ingest.WorkerSleep()
+				WorkerSleep()
 				batch = batch[:0]
 			}
 		case <- ticker.C:
 			if len(batch) > 0 {
+				WorkerWake()
 				e.flush(ctx, batch)
+				WorkerSleep() 
 				batch = batch[:0]
 			}
 		case <- ctx.Done(): 
 			if len(batch) > 0 {
+				WorkerWake()
 				e.flush(ctx, batch)
+				WorkerSleep() 
 			}
 			return
 		}
