@@ -25,16 +25,24 @@ type Server struct {
 	hub *hub.Hub
 	authCache *auth.AuthCache
 	jwtSecret string
+	// -----
+	Router *gin.Engine
 }
 
 func NewServer (db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.Hub, authCache *auth.AuthCache , jwtSecret string) *Server {
-	return &Server{
+	s := &Server{
 		db: db,
 		ingestEngine: ingestEngine,
 		hub: hub,
 		authCache: authCache,
 		jwtSecret:  jwtSecret,
 	}
+	
+	router := gin.Default() 
+	s.registerRoutes(router)
+	s.Router = router
+
+	return s
 }
 
 func ParseTime(c *gin.Context) (time.Time, time.Time) {
@@ -56,15 +64,6 @@ func ParseTime(c *gin.Context) (time.Time, time.Time) {
 	}
 
 	return  fromTime, toTime
-}
-
-func (s *Server) Run(addr string)  error {
-
-	router := gin.Default() 
-
-	s.registerRoutes(router)
-
-	return router.Run(addr)
 }
 
 var validate = validator.New()
