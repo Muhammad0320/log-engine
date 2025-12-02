@@ -106,6 +106,8 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 func (s *Server) handleLogIngest(c *gin.Context) {
 	ProjectID := c.GetInt("ProjectID")
 
+	fmt.Printf("DEBUG ------------------ : Handling logs for project ID: %d\n", ProjectID)
+
 	var logEntries []database.LogEntry
 	if err:= c.BindJSON(&logEntries); err != nil {
 		c.JSON(400, gin.H{"error": "bad request; expected an array"})
@@ -129,7 +131,7 @@ func (s *Server) handleLogIngest(c *gin.Context) {
 		return 
 	 }
 
-	 s.ingestEngine.LogQueue <- entry
+	 s.ingestEngine.LogQueue <- entry 
 	 ingest.RecordQueued(1)
 	}
 	c.JSON(202, gin.H{"message": "log received!"})

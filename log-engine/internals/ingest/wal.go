@@ -1,7 +1,6 @@
 package ingest
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"log-engine/internals/database"
@@ -61,20 +60,17 @@ func (w *WAL) Recover() ([]database.LogEntry, error) {
 	}
 
 	var logs []database.LogEntry
-	scanner := bufio.NewScanner(w.file)
+	
+	// Use json decoder instead of scanner. It allows read object-by-object
+	decoder := json.NewDecoder(w.file)
 
-	for scanner.Scan() {
+	for decoder.More() {
 		var entry database.LogEntry
-		if err := json.Unmarshal(scanner.Bytes(), &entry); err != nil {
-			// In Production we should add corrupt.log to store corrupt logs
-			fmt.Printf("⚠️ WAL Corrupt Line: %v\n", err)
+		if err := decoder.Decode(&entry); err != nil {	
+			fmt.Printf("⚠️ WAL corrupt Chunk: %v\n", err)
 			continue
 		}
 		logs = append(logs, entry)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
 	}
 
 	return  logs, nil 
