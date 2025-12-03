@@ -108,10 +108,12 @@ func (w *WAL) Recover() ([]database.LogEntry, error) {
 func (w *WAL) Clear() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-
+	fmt.Println("Did someone just call me 1--- ")
 	if err := w.file.Truncate(0); err != nil {
 		return  err
 	}
+	
+	fmt.Println("Did someone just call me 2--- ")
 
 	_, err := w.file.Seek(0, 0)	
 	return  err
