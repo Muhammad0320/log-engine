@@ -2,8 +2,6 @@ package server
 
 import (
 	"fmt"
-	"log-engine/internals/auth"
-	"log-engine/internals/database"
 	"net/http"
 	"strings"
 
@@ -88,17 +86,12 @@ func (s *Server) apiKeyAuthMiddleware() gin.HandlerFunc {
 		}
 		apiSecret := parts[1]
 
-		project, err := database.GetProductByApiKey(c, s.db, apiKey)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid api key"})
-			return 
+		projectID, valid := s.authCache.ValidateAPIKey(c.Request.Context(), apiKey, apiSecret)
+		if !valid {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid api credentials"})
 		}
 
-		if !auth.ComparePasswordHash(apiSecret, project.ApiSecretHash) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid api secret"})
-		}
-
-		c.Set("projectID", project.ID)
+		c.Set("projectID", projectID)
 		c.Next()
 	}
 }
