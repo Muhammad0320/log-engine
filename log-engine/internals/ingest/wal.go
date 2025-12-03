@@ -12,6 +12,7 @@ import (
 type WAL struct {
 	mu sync.Mutex
 	file *os.File 
+	path string
 }
 
 func NewWal(path string) (*WAL, error) {
@@ -21,7 +22,10 @@ func NewWal(path string) (*WAL, error) {
 		return nil, fmt.Errorf("failed to open WAL: %w", err)
 	}
 
-	return &WAL{file: file}, nil
+	return &WAL{
+		file: file,
+		path: path,
+		}, nil
 }
 
 func (w *WAL) WriteLog(entry database.LogEntry) error {
@@ -108,13 +112,23 @@ func (w *WAL) Recover() ([]database.LogEntry, error) {
 func (w *WAL) Clear() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	fmt.Println("Did someone just call me 1--- ")
-	if err := w.file.Truncate(0); err != nil {
-		return  err
-	}
-	
-	fmt.Println("Did someone just call me 2--- ")
 
-	_, err := w.file.Seek(0, 0)	
-	return  err
+	// 1. Close the existing handle to release the Windows lock
+	if err := w.file.Close(); err != nil {
+		return fmt.Errorf("failed to close wal for clearing: %w", err)
+	}
+
+	// 2. Truncate by PATH (The Nuclear Option)
+	if err := os.Truncate(w.path, 0); err != nil {
+		return fmt.Errorf("failed to truncate wal: %w", err)
+	}
+
+	// 3. Re-open the file
+	file, err := os.OpenFile(w.path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to reopen wal: %w", err)
+	}
+
+	w.file = file
+	return nil
 }
