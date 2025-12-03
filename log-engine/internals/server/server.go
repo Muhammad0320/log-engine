@@ -112,10 +112,6 @@ func (s *Server) handleLogIngest(c *gin.Context) {
 		return 
 	};
 
-	fmt.Printf("Len of log entried ----------: %d\n", len(logEntries))
-
-	ingest.RecordReceived(len(logEntries))
-
 	// Enrichments
 	for i := range logEntries {
 	 logEntries[i].ProjectID = ProjectID

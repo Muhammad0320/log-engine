@@ -89,7 +89,9 @@ func (s *Server) apiKeyAuthMiddleware() gin.HandlerFunc {
 		projectID, valid := s.authCache.ValidateAPIKey(c.Request.Context(), apiKey, apiSecret)
 		if !valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid api credentials"})
+			return 
 		}
+
 
 		c.Set("projectID", projectID)
 		c.Next()

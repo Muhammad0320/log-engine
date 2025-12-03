@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"crypto/sha256"
-	"fmt"
 	"log-engine/internals/database"
 	"sync"
 	"time"
@@ -68,15 +67,13 @@ func (c *AuthCache) ValidateAPIKey(ctx context.Context, apiKey, apiSecret string
 	if err != nil {
 		return 0, false
 	}
-
-	fmt.Println("See from auth cache -------------------")
-
+	
 	// Step 3: Check secret (slow math)
-	if !ComparePasswordHash(apiKey, project.ApiSecretHash) {
+	if !ComparePasswordHash(apiSecret, project.ApiSecretHash) {
 		return 0, false
 	}
 
-	// Step 4: Update cache
+	// Step 4: Update cache	
 	shard.Lock()
 	shard.items[apiKey] = ProjectCacheEntry{
 		ProjectID: project.ID,
