@@ -78,6 +78,22 @@ CREATE TABLE IF NOT EXISTS users (
 		return fmt.Errorf("faild to create project: %w", err)
 	}
 
+	createMemebersTableSQL := `
+		CREATE TABLE IF NOT EXISTS project_members (
+
+			project_id INTERGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+			user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			role VARCHAR(50) NOT NULL DEFAULT 'viewer',
+			joined_at TIMESTAMPTZ DEFAULT NOW(),
+			PRIMARY KEY (project_id, user_id)
+
+		);
+	`
+	_, err = db.Exec(ctx, createMemebersTableSQL)
+	if err != nil {
+		return fmt.Errorf("failed to  create 'project_member' table: %w", err)
+	}
+
 	// Create the main logs table
 	createTableSQL := `
 	CREATE TABLE IF NOT EXISTS logs (
@@ -174,7 +190,7 @@ func InsertLog(ctx context.Context, db *pgxpool.Pool, log LogEntry) error {
 	return nil
 }
 
-func GetLogs(ctx context.Context, db *pgxpool.Pool,  projectID ,limit, offset int, searchQuery string) ([]LogEntry, error) { 
+func GetLogs(ctx context.Context, db *pgxpool.Pool,  projectID ,limit, offset int, searchQuery string, retentionDays int) ([]LogEntry, error) { 
 
 	// 1. Safety: clamp limit
 	const MaxLimit = 1000
@@ -202,6 +218,7 @@ func GetLogs(ctx context.Context, db *pgxpool.Pool,  projectID ,limit, offset in
 		args = append(args, searchQuery)
 		argsCounter++
 	}
+	queryBuilder.WriteString(fmt.Sprintf(" TIMESTAMP > NOW() - INTERVAL '%d days'", retentionDays))
 
 	queryBuilder.WriteString(fmt.Sprintf(" ORDER BY timestamp DESC LIMIT $%d OFFSET $%d", argsCounter, argsCounter+1))
 	args = append(args, limit, offset)
@@ -452,3 +469,11 @@ func RunRetentionPolicy(ctx context.Context, db *pgxpool.Pool) {
 		}
 	}
 }
+
+
+func GetUserPlan(ctx context.Context, db *pgxpool.Pool, userID int) (string, error) {
+	var plan string
+	err := db.QueryRow(ctx, "SELECT plan FROM users WHERE id = $1", userID).Scan(&plan)
+	return  plan, err
+}
+
