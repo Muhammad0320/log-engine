@@ -284,6 +284,28 @@ func GetUserByEmail(ctx context.Context, db *pgxpool.Pool, email string) (User, 
 	return  user, nil 
 }
 
+type UserF struct{
+		ID int 
+		FirstName string
+		LastName string 
+		Email string
+		AvatarUrl string 
+		Plan string
+	}
+
+func GetUserByID(ctx context.Context, db *pgxpool.Pool, userID int) (UserF, error) {
+	var user UserF
+
+	err := db.QueryRow(ctx, `SELECT id, firstname, lastname, email, avatar_url, plan 
+	FROM users WHERE id = $1`, userID).Scan(&user)
+
+	if err != nil {
+		return user, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return user, nil 
+}
+
 type Project struct {
 	ID int 
 	UserID int 
@@ -504,4 +526,11 @@ func AddProjectMember(ctx context.Context, db *pgxpool.Pool, projectID int, emai
 	
 	return  err
 	
+}
+
+func GetProjectRole(ctx context.Context, db *pgxpool.Pool, userID, projectID int) (string, error) {
+
+	user, err := GetUserByEmail(ctx, db, )
+	
+
 }
