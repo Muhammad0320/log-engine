@@ -548,3 +548,13 @@ func GetMemberCountByProjectID(ctx context.Context, db *pgxpool.Pool, projectID 
 	
 	return count, err
 }
+
+func GetProjectCountByUserID(ctx context.Context, db *pgxpool.Pool, userID int) (int, error) {
+	var count int 
+	err := db.QueryRow(ctx, `SELECT COUNT(*) FROM projects WHERE user_id = $1`, userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get projects count: %w", err)
+	} 
+
+	return count, nil 
+}
