@@ -190,12 +190,10 @@ func (s *Server) handleGetLogs(c *gin.Context)  {
    ctx := c.Request.Context()
    plan, _ := database.GetUserPlan(ctx, s.db, userID.(int))
 
-   retention := 3 
-   if plan == "pro" || plan == "ultra" {
-	retention = 30
-   }
+  limits := database.GetPlanLimits(plan) 
+  rentention := limits.RetentionDays
 
-	logs, err := database.GetLogs(ctx, s.db, projectID ,limit, offset, serachQuery, retention)
+	logs, err := database.GetLogs(ctx, s.db, projectID ,limit, offset, serachQuery, rentention)
 	if err != nil {
 		fmt.Printf("Failed to get logs: %v\n", err)
 
@@ -482,9 +480,13 @@ func (s *Server) handleAddMember(c *gin.Context) {
     c.BindJSON(&req)
     
     if err := database.AddProjectMember(c.Request.Context(), s.db, projectID, req.Email, req.Role); err != nil {
-        c.JSON(500, gin.H{"error": "failed to add member"})
+        if err.Error() == "user is already a member" {
+			c.JSON(409, gin.H{"error": "user is already a member"})
+			return
+		}
+ 		
+		c.JSON(500, gin.H{"error": "failed to add member"})
         return
     }
     c.JSON(200, gin.H{"message": "member invited"})
-
 }
