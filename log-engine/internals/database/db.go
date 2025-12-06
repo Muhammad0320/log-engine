@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS users (
 	createMemebersTableSQL := `
 		CREATE TABLE IF NOT EXISTS project_members (
 
-			project_id INTERGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+			project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
 			user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			role VARCHAR(50) NOT NULL DEFAULT 'viewer',
 			joined_at TIMESTAMPTZ DEFAULT NOW(),
@@ -254,7 +254,7 @@ func CreateUser(ctx context.Context, db *pgxpool.Pool, firstname, lastname, emai
 
 	var newUserID int 
 	err := db.QueryRow(ctx, 
-		`INSERT INTO users (firstname, lastname, email, password_hash) VALUES ($1, $2, $3) RETURNING id`,
+		`INSERT INTO users (firstname, lastname, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id`,
 		firstname, lastname, email, hashpassword,
 	).Scan(&newUserID)
 
