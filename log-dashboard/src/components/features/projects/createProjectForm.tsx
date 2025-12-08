@@ -50,7 +50,7 @@ export default function CreateProjectForm({
     } else if (state.errors?._form) {
       toast.error(state.errors._form[0]);
     }
-  }, [state, toast]);
+  }, [state, toast, onProjectCreated]);
 
   const handleSubmit = (formData: FormData) => {
     const name = formData.get("name") as string;
