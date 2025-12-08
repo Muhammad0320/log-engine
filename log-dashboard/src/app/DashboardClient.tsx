@@ -7,6 +7,7 @@ import { useLogStream } from "@/hooks/useLogStream";
 import { Project } from "@/lib/types"; // Using our shared type
 import LogList from "@/components/features/logs/Loglist";
 import { useToast } from "@/providers/ToastProvider";
+import { LogToolbar } from "@/components/features/logs/LogToolbar";
 
 interface DashboardClientProps {
   initialProjects: Project[];
@@ -38,11 +39,26 @@ export default function DashboardClient({
 
   // 2. WebSocket Connection
   // Pass the selected project ID. The hook handles connecting/disconnecting/buffering.
-  const { logs, status } = useLogStream(selectedProject || 0, token);
-
   // 3. Derived UI State
   const currentProjectName =
     projects.find((p) => p.id === selectedProject)?.name || "Select Project";
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Get raw logs from your hook
+  const { logs, status } = useLogStream(selectedProject || 0, token);
+
+  // LOGIC: Filter logs before rendering
+  // This is efficient enough for < 10k logs in client memory
+  const filteredLogs = logs.filter((log) => {
+    if (!searchQuery) return true;
+    const lowerQuery = searchQuery.toLowerCase();
+    return (
+      log.message.toLowerCase().includes(lowerQuery) ||
+      log.service.toLowerCase().includes(lowerQuery) ||
+      log.level.toLowerCase().includes(lowerQuery)
+    );
+  });
 
   return (
     <DashboardGrid
@@ -123,20 +139,30 @@ export default function DashboardClient({
           Live Metrics Incoming...
         </div>
       }
-      // --- LOGS (The Virtualized List) ---
-      logs={
-        selectedProject ? (
-          <LogList logs={logs} />
-        ) : (
-          <div style={{ padding: 20, color: "#8b949e" }}>
-            Please select a project to view logs.
-          </div>
-        )
-      }
       // --- CHARTS (Placeholder) ---
       charts={
         <div style={{ color: "#8b949e", fontSize: "13px" }}>
           Volume Analytics
+        </div>
+      }
+      logs={
+        <div
+          style={{ display: "flex", flexDirection: "column", height: "100%" }}
+        >
+          <LogToolbar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onRefresh={() => {}}
+          />
+          <div style={{ flex: 1 }}>
+            {selectedProject ? (
+              <LogList logs={filteredLogs} /> // Pass filtered logs!
+            ) : (
+              <div style={{ padding: 20, color: "#8b949e" }}>
+                Select a project
+              </div>
+            )}
+          </div>
         </div>
       }
     />
