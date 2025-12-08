@@ -4,6 +4,7 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
+	"log"
 	"log-engine/internals/auth"
 	"log-engine/internals/database"
 	"log-engine/internals/hub"
@@ -461,8 +462,13 @@ func (s *Server) handleAddMember(c *gin.Context) {
 	projectIDStr := c.Param("id")
 	projectID, _ := strconv.Atoi(projectIDStr)
 
-	role, _ := database.GetProjectRole(c.Request.Context(), s.db, userID, projectID)
-
+	role, err:= database.GetProjectRole(c.Request.Context(), s.db, userID, projectID)
+	if err != nil {
+		log.Fatalf("Cannot get role: %s", err)
+		return
+	}
+	rolelog := fmt.Sprintf(" This is the role %s", role)
+	fmt.Println("--------------- role ------------------", rolelog)
 	if role != "owner" && role != "admin" {
 		c.JSON(403, gin.H{"error": "only admins can invite members"})
 		return

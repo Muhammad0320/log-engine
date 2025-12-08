@@ -78,7 +78,7 @@ func TestRBAC_EndToEnd(t *testing.T) {
 	// --- 1. SETUP USERS ---
 	// Register User A (Admin)
 	w := makeRequest(s, "POST", "/api/v1/auth/register", "", map[string]string{
-		"first_name": "Admin", "last_name": "User", "email": "admin@test.com", "password": "password123",
+		"firstname": "Admin", "lastname": "User", "email": "admin@test.com", "password": "password123",
 	})
 	if w.Code != 201 { t.Fatalf("Failed to register Admin: %v", w.Body.String()) }
 	var adminAuth struct { Token string `json:"token"` }
@@ -86,8 +86,9 @@ func TestRBAC_EndToEnd(t *testing.T) {
 
 	// Register User B (Viewer)
 	w = makeRequest(s, "POST", "/api/v1/auth/register", "", map[string]string{
-		"first_name": "Viewer", "last_name": "User", "email": "viewer@test.com", "password": "password123",
+		"firstname": "Viewer", "lastname": "User", "email": "viewer@test.com", "password": "password123",
 	})
+	
 	if w.Code != 201 { t.Fatalf("Failed to register Viewer") }
 	var viewerAuth struct { Token string `json:"token"` }
 	json.Unmarshal(w.Body.Bytes(), &viewerAuth)
@@ -142,7 +143,7 @@ func TestRBAC_EndToEnd(t *testing.T) {
 	// --- 7. VIEW LOGS (Access Denied Case) ---
 	// Register Random User C
 	w = makeRequest(s, "POST", "/api/v1/auth/register", "", map[string]string{
-		"first_name": "Stranger", "last_name": "Danger", "email": "stranger@test.com", "password": "password123",
+		"firstname": "Stranger", "lastname": "Danger", "email": "stranger@test.com", "password": "password123",
 	})
 	var strangerAuth struct { Token string `json:"token"` }
 	json.Unmarshal(w.Body.Bytes(), &strangerAuth)

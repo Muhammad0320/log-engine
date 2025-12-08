@@ -113,5 +113,4 @@ func (s *Server) SecurityHeadersMiddleware() gin.HandlerFunc {
 
 		c.Next()
 	}
-
 } 
