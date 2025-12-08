@@ -60,7 +60,7 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "incalid user ID in token"})
 			return 
 		}
-
+		
 		userID := int(userIDFloat)
 		c.Set("userID", userID)
 

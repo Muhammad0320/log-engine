@@ -64,6 +64,7 @@ func makeRequest(s *Server, method, url, token string, body interface{}) *httpte
 	req, _ := http.NewRequest(method, url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
 	if token != "" {
+		
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	
@@ -82,7 +83,10 @@ func TestRBAC_EndToEnd(t *testing.T) {
 	})
 	if w.Code != 201 { t.Fatalf("Failed to register Admin: %v", w.Body.String()) }
 	var adminAuth struct { Token string `json:"token"` }
-	json.Unmarshal(w.Body.Bytes(), &adminAuth)
+	err := json.Unmarshal(w.Body.Bytes(), &adminAuth)
+	if err != nil {
+		fmt.Printf("error unmarshallig ... %s\n", err)
+	}
 
 	// Register User B (Viewer)
 	w = makeRequest(s, "POST", "/api/v1/auth/register", "", map[string]string{

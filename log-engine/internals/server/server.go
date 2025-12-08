@@ -458,7 +458,7 @@ func (s *Server) handleGetSummary(c *gin.Context) {
 
 func (s *Server) handleAddMember(c *gin.Context) {
 
-	userID := c.GetInt("UserID")
+	userID := c.GetInt("userID")
 	projectIDStr := c.Param("id")
 	projectID, _ := strconv.Atoi(projectIDStr)
 
@@ -467,8 +467,7 @@ func (s *Server) handleAddMember(c *gin.Context) {
 		log.Fatalf("Cannot get role: %s", err)
 		return
 	}
-	rolelog := fmt.Sprintf(" This is the role %s", role)
-	fmt.Println("--------------- role ------------------", rolelog)
+
 	if role != "owner" && role != "admin" {
 		c.JSON(403, gin.H{"error": "only admins can invite members"})
 		return
@@ -479,9 +478,10 @@ func (s *Server) handleAddMember(c *gin.Context) {
 	// Check plan limit
 	count, _ := database.GetMemberCountByProjectID(c.Request.Context(), s.db, projectID) 
 	
-	if database.GetPlanLimits(plan).MaxMemebers >= count {
+	if count >= database.GetPlanLimits(plan).MaxMemebers  {
 		// I don't know the right status code to send
-		c.JSON(400, gin.H{"error": fmt.Sprintf("You've reached you limit of %d members! kindly unpgrade your plan.", count)})
+		c.JSON(402, gin.H{"error": fmt.Sprintf("You've reached you limit of %d members! kindly unpgrade your plan.", count)})
+		return
 	}
 
 	// Add member

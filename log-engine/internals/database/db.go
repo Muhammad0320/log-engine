@@ -537,11 +537,17 @@ func AddProjectMember(ctx context.Context, db *pgxpool.Pool, projectID int, emai
 
 func GetProjectRole(ctx context.Context, db *pgxpool.Pool, userID, projectID int) (string, error) {
     // 1. Check if Owner
-    var isOwner bool
-    err := db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1 AND user_id = $2)", projectID, userID).Scan(&isOwner)
-    if err == nil && isOwner {
-        return "owner", nil
-    }
+	var isOwner bool
+	err := db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1 AND user_id = $2)", projectID, userID).Scan(&isOwner)
+
+	if err != nil {
+		// Log it or return it. Don't let it fall through silently!
+		return "", fmt.Errorf("failed to check owner status: %w", err)
+	}
+
+	if isOwner {
+		return "owner", nil
+	}
 
     // 2. Check if Member
     var role string
