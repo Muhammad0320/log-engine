@@ -23,6 +23,12 @@ export function useLogStream(projectID: number, token: string | null) {
   const connect = useCallback(() => {
     if (!projectID || !token) return;
 
+    if (
+      ws.current?.readyState === WebSocket.OPEN ||
+      ws.current?.readyState === WebSocket.CONNECTING
+    )
+      return;
+
     const wsBase =
       process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080/api/v1";
     const wsUrl = `${wsBase}/logs/ws?project_id=${projectID}&token=${token}`;
