@@ -20,7 +20,9 @@ export function useLogStream(projectID: number, token: string | null) {
   useEffect(() => {
     if (!projectID || !token) return;
 
-    const wsUrl = `ws://localhost:8080/api/v1/logs/ws?project_id=${projectID}&token=${token}`;
+    const wsBase =
+      process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080/api/v1";
+    const wsUrl = `${wsBase}/logs/ws?project_id=${projectID}&token=${token}`;
 
     ws.current = new WebSocket(wsUrl);
 
