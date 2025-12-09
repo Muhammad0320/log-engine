@@ -43,7 +43,7 @@ export function useLogStream(projectID: number, token: string | null) {
         retryCount.current = 0;
         // Only show toast if we were previously disconnected (reconnection success)
         if (retryCount.current > 0) {
-          toast.success("Live stream reconnected");
+          toast.success("Live stream reconnected ✅");
         }
       };
 
