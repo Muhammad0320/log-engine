@@ -1,5 +1,14 @@
 import { LogEntry } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
+
+const LogSchema = z.object({
+  timestamp: z.string(),
+  level: z.string(),
+  service: z.string(),
+  message: z.string(),
+  project_id: z.number(),
+});
 
 type ConnectionStatus = "CONNECTING" | "OPEN" | "CLOSED" | "ERROR";
 
@@ -22,11 +31,17 @@ export function useLogStream(projectID: number, token: string | null) {
 
     ws.current.onmessage = (event) => {
       try {
-        const newLog: LogEntry = JSON.parse(event.data);
+        const raw: LogEntry = JSON.parse(event.data);
 
-        setLogs((prevLogs) => [newLog, ...prevLogs]);
+        const result = LogSchema.safeParse(raw);
+
+        if (result.success) {
+          setLogs((prevLogs) => [result.data, ...prevLogs]);
+        } else {
+          console.warn("⚠️ Invalid log packet received:", result.error);
+        }
       } catch (error) {
-        console.error("Failed to pase log:", error);
+        console.error(" 🔥 Failed to parse WS message:", event.data);
       }
     };
 
