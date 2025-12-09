@@ -7,9 +7,9 @@ import { LogEntry } from "@/lib/types";
 
 // 1. Styled Component for the Row
 const LogRow = styled.div<{ $level: string }>`
-  font-family: "Fira Code", monospace; /* Ensure font is imported in global.css */
+  font-family: var(--font-fira-code), monospace;
   font-size: 13px;
-  padding: 4px 16px; /* Added horizontal padding */
+  padding: 4px 16px;
   border-left: 3px solid;
 
   /* Use transient props ($level) so they don't pass to DOM */
