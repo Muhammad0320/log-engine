@@ -1,4 +1,5 @@
 import { LogEntry } from "@/lib/types";
+import { useToast } from "@/providers/ToastProvider";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 
@@ -19,78 +20,84 @@ export function useLogStream(projectID: number, token: string | null) {
   const ws = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
   const retryCount = useRef(0);
+  const toast = useToast();
 
-  const connect = useCallback(() => {
+  useEffect(() => {
     if (!projectID || !token) return;
-
-    if (
-      ws.current?.readyState === WebSocket.OPEN ||
-      ws.current?.readyState === WebSocket.CONNECTING
-    )
-      return;
 
     const wsBase =
       process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080/api/v1";
     const wsUrl = `${wsBase}/logs/ws?project_id=${projectID}&token=${token}`;
 
-    setStatus("CONNECTING");
-    const socket = new WebSocket(wsUrl);
-    ws.current = socket;
+    function connect() {
+      // Safety check: Don't connect if already open
+      if (ws.current?.readyState === WebSocket.OPEN) return;
 
-    socket.onopen = () => {
-      console.log("🟢 WS Connected");
-      setStatus("OPEN");
-      retryCount.current = 0;
-    };
+      setStatus("CONNECTING");
+      const socket = new WebSocket(wsUrl);
+      ws.current = socket;
 
-    socket.onmessage = (event) => {
-      try {
-        const raw: LogEntry = JSON.parse(event.data);
-
-        const result = LogSchema.safeParse(raw);
-
-        if (result.success) {
-          setLogs((prevLogs) => [result.data, ...prevLogs]);
-        } else {
-          console.warn("⚠️ Invalid log packet received:", result.error);
+      socket.onopen = () => {
+        console.log("🟢 WS Connected");
+        setStatus("OPEN");
+        retryCount.current = 0;
+        // Only show toast if we were previously disconnected (reconnection success)
+        if (retryCount.current > 0) {
+          toast.success("Live stream reconnected");
         }
-      } catch (error) {
-        console.error(" 🔥 Failed to parse WS message:", event.data);
-      }
-    };
+      };
 
-    socket.onclose = (event) => {
-      if (event.wasClean) {
-        setStatus("CLOSED");
-        return;
-      }
+      socket.onmessage = (event) => {
+        try {
+          const raw = JSON.parse(event.data);
+          const result = LogSchema.safeParse(raw);
+          if (result.success) {
+            setLogs((prev) => [result.data, ...prev]);
+          }
+        } catch (error) {
+          console.error("WS Parse Error", error);
+        }
+      };
 
-      setStatus("ERROR");
-      ws.current = null;
+      socket.onclose = (event) => {
+        if (event.wasClean) {
+          setStatus("CLOSED");
+          return;
+        }
 
-      const delay = Math.min(1000 * Math.pow(2, retryCount.current), 30000);
-      console.log(`⚠️ WS closed. Reconnecting in ${delay}ms...`);
+        setStatus("ERROR");
+        ws.current = null;
 
-      reconnectTimeout.current = setTimeout(() => {
-        retryCount.current++;
-        connect();
-      }, delay);
-    };
-    socket.onerror = () => {
-      socket.close();
-    };
-  }, [projectID, token]);
+        const delay = Math.min(1000 * Math.pow(2, retryCount.current), 30000);
 
-  useEffect(() => {
+        // Notify user of connection loss
+        if (retryCount.current === 0) {
+          toast.error(`Connection lost. Retrying in ${delay / 1000}s...`);
+        }
+
+        console.log(`⚠️ WS Closed. Reconnecting in ${delay}ms...`);
+
+        reconnectTimeout.current = setTimeout(() => {
+          retryCount.current++;
+          connect(); // Recursive call is safe here inside useEffect scope
+        }, delay);
+      };
+
+      socket.onerror = () => {
+        socket.close();
+      };
+    }
+
     connect();
 
     return () => {
+      // Cleanup
       if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
       if (ws.current) {
         ws.current.close(1000, "Unmounting");
       }
     };
-  }, [connect]);
+  }, [projectID, token, toast]); // Add toast to dependencies
 
   return { logs, status };
 }
