@@ -2,10 +2,11 @@
 
 import { useState, useOptimistic } from "react";
 import styled from "styled-components";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Check, Copy } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Project } from "@/lib/types";
 import CreateProjectForm from "./createProjectForm";
+import { BorderBeamButton } from "@/components/ui/borderBeamButton";
 
 // ... (Styled Components: Container, Header, Title, AddButton, ProjectItem REMAIN THE SAME) ...
 const Container = styled.div`
@@ -54,6 +55,84 @@ const ProjectItem = styled.div<{ $active?: boolean; $pending?: boolean }>`
   }
 `;
 
+// NEW: Styles for the Key Reveal
+const KeyContainer = styled.div`
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 16px;
+  margin-top: 16px;
+`;
+
+const KeyRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const KeyLabel = styled.span`
+  font-size: 12px;
+  color: #8b949e;
+  font-weight: 600;
+  text-transform: uppercase;
+`;
+
+const KeyValueGroup = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const KeyInput = styled.code`
+  flex: 1;
+  background: #161b22;
+  border: 1px solid #30363d;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #58a6ff;
+  font-family: monospace;
+  font-size: 13px;
+`;
+
+const CopyButton = styled.button`
+  background: #21262d;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 6px;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  &:hover {
+    background: #30363d;
+  }
+`;
+
+// Helper for Copy Logic
+function CopyField({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <KeyValueGroup>
+      <KeyInput>{value}</KeyInput>
+      <CopyButton onClick={handleCopy} type="button">
+        {copied ? <Check size={14} color="#2ecc71" /> : <Copy size={14} />}
+      </CopyButton>
+    </KeyValueGroup>
+  );
+}
+
 interface ProjectListProps {
   initialProjects: Project[];
   onSelect: (id: number) => void;
@@ -65,9 +144,15 @@ export default function ProjectList({
   onSelect,
   selectedId,
 }: ProjectListProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  // Optimistic State lives here (in the parent) so the list updates
+  // NEW: State to hold the created keys
+  const [createdKeys, setCreatedKeys] = useState<{
+    apiKey: string;
+    apiSecret: string;
+    projectId: number;
+  } | null>(null);
+
   const [optimisticProjects, addOptimisticProject] = useOptimistic(
     initialProjects,
     (state: Project[], newProject: Project) => [...state, newProject]
@@ -81,11 +166,27 @@ export default function ProjectList({
     });
   };
 
+  // When form succeeds, we don't close. We show keys.
+  const handleProjectCreated = (data: {
+    apiKey: string;
+    apiSecret: string;
+    projectId: number;
+  }) => {
+    setCreatedKeys(data);
+    // Auto-select the new project behind the modal
+    onSelect(data.projectId);
+  };
+
+  const closeAndReset = () => {
+    setIsCreateOpen(false);
+    setCreatedKeys(null);
+  };
+
   return (
     <Container>
       <Header>
         <Title>Projects</Title>
-        <AddButton onClick={() => setIsOpen(true)}>
+        <AddButton onClick={() => setIsCreateOpen(true)}>
           <Plus size={16} />
         </AddButton>
       </Header>
@@ -103,15 +204,46 @@ export default function ProjectList({
       ))}
 
       <Modal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        title="Create New Project"
+        isOpen={isCreateOpen}
+        onClose={closeAndReset}
+        title={createdKeys ? "Connect Your Agent" : "Create New Project"}
       >
-        {isOpen && (
+        {!createdKeys ? (
+          // STEP 1: Create Form
           <CreateProjectForm
-            onSuccess={() => setIsOpen(false)}
+            onProjectCreated={handleProjectCreated}
             addOptimistic={handleAddOptimistic}
           />
+        ) : (
+          // STEP 2: Key Reveal (The "Success" State)
+          <div>
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#8b949e",
+                marginBottom: "16px",
+              }}
+            >
+              These keys will <strong>only be shown once</strong>. Copy them
+              now.
+            </p>
+
+            <KeyContainer>
+              <KeyRow>
+                <KeyLabel>Public Key (PK)</KeyLabel>
+                <CopyField value={createdKeys.apiKey} />
+              </KeyRow>
+
+              <KeyRow>
+                <KeyLabel>Secret Key (SK)</KeyLabel>
+                <CopyField value={createdKeys.apiSecret} />
+              </KeyRow>
+            </KeyContainer>
+
+            <BorderBeamButton onClick={closeAndReset}>
+              I have saved my keys securely
+            </BorderBeamButton>
+          </div>
         )}
       </Modal>
     </Container>
