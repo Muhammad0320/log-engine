@@ -1,5 +1,5 @@
 import { LogEntry } from "@/lib/types";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 
 const LogSchema = z.object({
@@ -15,23 +15,29 @@ type ConnectionStatus = "CONNECTING" | "OPEN" | "CLOSED" | "ERROR";
 export function useLogStream(projectID: number, token: string | null) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>("CLOSED");
-  const ws = useRef<WebSocket | null>(null);
 
-  useEffect(() => {
+  const ws = useRef<WebSocket | null>(null);
+  const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
+  const retryCount = useRef(0);
+
+  const connect = useCallback(() => {
     if (!projectID || !token) return;
 
     const wsBase =
       process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080/api/v1";
     const wsUrl = `${wsBase}/logs/ws?project_id=${projectID}&token=${token}`;
 
-    ws.current = new WebSocket(wsUrl);
+    setStatus("CONNECTING");
+    const socket = new WebSocket(wsUrl);
+    ws.current = socket;
 
-    ws.current.onopen = () => {
-      console.log("WS Connected");
+    socket.onopen = () => {
+      console.log("🟢 WS Connected");
       setStatus("OPEN");
+      retryCount.current = 0;
     };
 
-    ws.current.onmessage = (event) => {
+    socket.onmessage = (event) => {
       try {
         const raw: LogEntry = JSON.parse(event.data);
 
@@ -47,15 +53,38 @@ export function useLogStream(projectID: number, token: string | null) {
       }
     };
 
-    ws.current.onclose = () => setStatus("CLOSED");
-    ws.current.onerror = () => setStatus("ERROR");
-
-    return () => {
-      if (ws.current) {
-        ws.current.close();
+    socket.onclose = (event) => {
+      if (event.wasClean) {
+        setStatus("CLOSED");
+        return;
       }
+
+      setStatus("ERROR");
+      ws.current = null;
+
+      const delay = Math.min(1000 * Math.pow(2, retryCount.current), 30000);
+      console.log(`⚠️ WS closed. Reconnecting in ${delay}ms...`);
+
+      reconnectTimeout.current = setTimeout(() => {
+        retryCount.current++;
+        connect();
+      }, delay);
+    };
+    socket.onerror = () => {
+      socket.close();
     };
   }, [projectID, token]);
+
+  useEffect(() => {
+    connect();
+
+    return () => {
+      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+      if (ws.current) {
+        ws.current.close(1000, "Unmounting");
+      }
+    };
+  }, [connect]);
 
   return { logs, status };
 }
