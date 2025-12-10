@@ -60,6 +60,7 @@ export async function registerAction(
   prevState: RegisterFormState,
   formData: FormData
 ): Promise<RegisterFormState> {
+  console.log("Are you here? -----");
   const validatedRegisterSchema = RegisterFormSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),

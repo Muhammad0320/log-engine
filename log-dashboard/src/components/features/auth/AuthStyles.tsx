@@ -32,6 +32,7 @@ export const InputWrapper = styled.div`
     z-index: 2;
   }
 `;
+
 export const Input = styled.input<{ $hasError?: boolean }>`
   width: 100%;
   background: #0d1117;
