@@ -33,6 +33,7 @@ export default function RegisterForm() {
         <Label htmlFor="name">Full Name</Label>
         <Input
           name="name"
+          autoComplete="name"
           type="text"
           placeholder="Han Solo"
           $hasError={!!state.errors?.name}
@@ -49,6 +50,7 @@ export default function RegisterForm() {
         <Input
           name="email"
           type="email"
+          autoComplete="email"
           placeholder="pilot@falcon.com"
           $hasError={!!state.errors?.email}
         />
@@ -79,7 +81,6 @@ export default function RegisterForm() {
       <FormGroup>
         <Label htmlFor="confirmPassword">Confirm Password</Label>
         <InputWrapper>
-          <Lock size={16} />
           <Input
             id="confirmPassword"
             name="confirmPassword"

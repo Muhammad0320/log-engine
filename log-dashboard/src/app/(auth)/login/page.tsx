@@ -6,7 +6,7 @@ export default function LoginPage() {
     <>
       <LoginForm />
       <StyledAuthLink href={"/register"}>
-        Don`&apos;`t have an account? Create one
+        Don&apos;t have an account? Create one
       </StyledAuthLink>
     </>
   );
