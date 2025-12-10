@@ -42,11 +42,11 @@ export const RegisterFormSchema = z
         error: "Contains at least one special character",
       })
       .trim(),
-    passwordConfirm: z.string().trim(),
+    confirmPassword: z.string().trim(),
   })
-  .refine((data) => data.password === data.passwordConfirm, {
+  .refine((data) => data.password === data.confirmPassword, {
     error: "Passwords do not match",
-    path: ["passwordConfirm"],
+    path: ["confirmPassword"],
   });
 
 export type RegisterFormState = {
@@ -54,7 +54,7 @@ export type RegisterFormState = {
     name?: string[];
     email?: string[];
     password?: string[];
-    passwordComfirm?: string[];
+    confirmPassword?: string[];
     _form?: string[];
   };
   message?: string;

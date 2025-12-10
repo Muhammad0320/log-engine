@@ -1,4 +1,5 @@
-"use server";
+import { RegisterFormState } from "./../lib/definitions";
+("use server");
 
 import { fetchClient } from "@/lib/client";
 import {
@@ -56,13 +57,14 @@ export async function loginAction(
 }
 
 export async function registerAction(
-  prevState: AuthFormState,
+  prevState: RegisterFormState,
   formData: FormData
-): Promise<AuthFormState> {
+): Promise<RegisterFormState> {
   const validatedRegisterSchema = RegisterFormSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
   });
 
   if (!validatedRegisterSchema.success) {

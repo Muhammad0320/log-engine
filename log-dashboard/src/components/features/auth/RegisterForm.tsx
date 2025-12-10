@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { registerAction } from "@/actions/auth";
-import { AuthFormState } from "@/lib/definitions";
+import { AuthFormState, RegisterFormState } from "@/lib/definitions";
 import { FieldError, GlobalError } from "@/components/ui/formErrors";
 import { BorderBeamButton } from "@/components/ui/borderBeamButton";
 import { Eye, EyeOff } from "lucide-react";
@@ -15,11 +15,11 @@ import {
   TogglePasswordBtn,
 } from "./AuthStyles";
 
-const initialState: AuthFormState = { errors: {} };
+const initialState: RegisterFormState = { errors: {} };
 
 export default function RegisterForm() {
   const [state, formAction, isPending] = useActionState<
-    AuthFormState,
+    RegisterFormState,
     FormData
   >(registerAction, initialState);
 
@@ -27,7 +27,7 @@ export default function RegisterForm() {
 
   return (
     <Form action={formAction}>
-      <GlobalError errors={state.errors._form} />
+      <GlobalError errors={state.errors?._form} />
 
       <FormGroup>
         <Label htmlFor="name">Full Name</Label>
@@ -35,9 +35,9 @@ export default function RegisterForm() {
           name="name"
           type="text"
           placeholder="Han Solo"
-          $hasError={!!state.errors.name}
+          $hasError={!!state.errors?.name}
         />
-        <FieldError errors={state.errors.name} />
+        <FieldError errors={state.errors?.name} />
       </FormGroup>
 
       <FormGroup>
@@ -50,9 +50,9 @@ export default function RegisterForm() {
           name="email"
           type="email"
           placeholder="pilot@falcon.com"
-          $hasError={!!state.errors.email}
+          $hasError={!!state.errors?.email}
         />
-        <FieldError errors={state.errors.email} />
+        <FieldError errors={state.errors?.email} />
       </FormGroup>
 
       <FormGroup>
@@ -63,7 +63,7 @@ export default function RegisterForm() {
             name="password"
             type={showPassword ? "text" : "password"}
             placeholder="••••••••"
-            $hasError={!!state.errors.password}
+            $hasError={!!state.errors?.password}
           />
           <TogglePasswordBtn
             type="button"
@@ -73,7 +73,7 @@ export default function RegisterForm() {
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </TogglePasswordBtn>
         </InputWrapper>
-        <FieldError errors={state.errors.password} />
+        <FieldError errors={state.errors?.password} />
       </FormGroup>
 
       <div style={{ marginTop: "16px" }}>
