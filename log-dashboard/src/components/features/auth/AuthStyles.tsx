@@ -23,8 +23,15 @@ export const InputWrapper = styled.div`
   position: relative;
   display: flex;
   align-items: center;
-`;
 
+  & > svg {
+    position: absolute;
+    left: 12px;
+    color: #8b949e;
+    pointer-events: none;
+    z-index: 2;
+  }
+`;
 export const Input = styled.input<{ $hasError?: boolean }>`
   width: 100%;
   background: #0d1117;
