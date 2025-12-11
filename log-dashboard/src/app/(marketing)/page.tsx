@@ -359,7 +359,7 @@ export default function MarketingPage() {
               }}
             >
               <Image
-                src="/hypercube.jpg"
+                src="/hypercube.png"
                 alt="Hypertable"
                 fill
                 style={{ objectFit: "contain" }}
@@ -420,7 +420,7 @@ export default function MarketingPage() {
               }}
             >
               <Image
-                src="/vault-green.jpg"
+                src="/vault-green.png"
                 alt="WAL Durability"
                 fill
                 style={{ objectFit: "cover" }}
