@@ -16,6 +16,13 @@ const Nav = styled.nav`
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   background: rgba(5, 5, 5, 0.6);
+  height: 80px; /* Explicit height */
+`;
+
+const MainContent = styled.main`
+  padding-top: 80px; /* MATCH THE HEADER HEIGHT */
+  background-color: #050505;
+  min-height: 100vh;
 `;
 
 const Logo = styled.div`
@@ -86,7 +93,7 @@ export default function MarketingLayout({
           </div>
         </AuthButtons>
       </Nav>
-      {children}
+      <MainContent>{children}</MainContent>
     </div>
   );
 }

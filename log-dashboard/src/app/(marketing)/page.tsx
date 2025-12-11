@@ -26,7 +26,7 @@ const HeroSection = styled.section`
   align-items: center;
   justify-content: center;
   position: relative;
-  padding-top: 40px;
+  /* padding-top: 40px; */
   overflow: hidden;
 
   /* The Grid Background */
