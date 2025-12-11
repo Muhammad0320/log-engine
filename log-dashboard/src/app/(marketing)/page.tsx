@@ -7,6 +7,7 @@ import Image from "next/image"; // Import Image for your assets
 import hypercube from "../../../public/hypercube.png"; // Example image import
 import valut from "../../../public/vault-green.png"; // Example image import
 import serverExploded from "../../../public/server-exploded.png"; // Example image import
+import { BorderBeamButton } from "@/components/ui/borderBeamButton";
 
 // --- ANIMATIONS ---
 const scanline = keyframes`
@@ -313,9 +314,11 @@ export default function MarketingPage() {
         </Subtitle>
 
         <ButtonGroup>
-          <PrimaryButton href="/register">
-            Get Started <ArrowRight size={16} />
-          </PrimaryButton>
+          <Link href={"/register"}>
+            <BorderBeamButton variant="primary">
+              Get Started <ArrowRight size={16} />
+            </BorderBeamButton>
+          </Link>
         </ButtonGroup>
 
         {/* HERO IMAGE CONTAINER */}
