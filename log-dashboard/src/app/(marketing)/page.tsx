@@ -19,6 +19,37 @@ const Container = styled.div`
   overflow-x: hidden;
 `;
 
+const HeroTitle = styled.h1`
+  font-size: 84px;
+  font-weight: 800;
+  letter-spacing: -3px;
+  line-height: 1.05;
+  text-align: center;
+  margin-bottom: 24px;
+  z-index: 1;
+  max-width: 90%; /* Prevent overflow */
+
+  /* Gradient text... */
+  background: linear-gradient(180deg, #fff 0%, #8b949e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  span {
+    color: #58a6ff;
+    -webkit-text-fill-color: #58a6ff;
+  }
+
+  /* Tablet & Mobile Adjustment */
+  @media (max-width: 1024px) {
+    font-size: 56px; /* Smaller for tablets */
+  }
+
+  @media (max-width: 768px) {
+    font-size: 42px; /* Smaller for mobile */
+  }
+`;
+
 const HeroSection = styled.section`
   min-height: 90vh;
   display: flex;
@@ -72,29 +103,6 @@ const Pill = styled.div`
   z-index: 1;
 `;
 
-const Title = styled.h1`
-  font-size: 84px;
-  font-weight: 800;
-  letter-spacing: -3px;
-  line-height: 1.05;
-  text-align: center;
-  margin-bottom: 24px;
-  z-index: 1;
-  background: linear-gradient(180deg, #fff 0%, #8b949e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-
-  span {
-    color: #58a6ff;
-    -webkit-text-fill-color: #58a6ff;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 48px;
-  }
-`;
-
 const Subtitle = styled.p`
   font-size: 20px;
   color: #8b949e;
@@ -129,13 +137,6 @@ const PrimaryButton = styled(Link)`
   }
 `;
 
-// --- BENTO GRID ---
-const BentoSection = styled.section`
-  padding: 100px 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
 const SectionHeader = styled.div`
   margin-bottom: 64px;
   text-align: center;
@@ -156,12 +157,16 @@ const SectionHeader = styled.div`
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 320px);
   gap: 24px;
 
+  /* Tablet: 2 Columns */
   @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Mobile: 1 Column */
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
-    grid-template-rows: auto;
   }
 `;
 
@@ -203,6 +208,11 @@ const Card = styled.div<{ $colSpan?: number; $highlight?: string }>`
   &:hover {
     border-color: ${(p) => p.$highlight || "#58a6ff"};
     transform: translateY(-4px);
+  }
+
+  /* Reset spans on tablet/mobile so cards don't leave gaps */
+  @media (max-width: 1024px) {
+    grid-column: span 1 !important; /* Force single column width */
   }
 `;
 
@@ -253,6 +263,18 @@ const Scanline = styled.div`
   pointer-events: none;
 `;
 
+// 4. Fix Section Padding
+const BentoSection = styled.section`
+  padding: 100px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%; /* Ensure it doesn't overflow container */
+
+  @media (max-width: 768px) {
+    padding: 60px 16px;
+  }
+`;
+
 // --- COMPONENT ---
 export default function MarketingPage() {
   // FIXED: Strict Typing for Event
@@ -277,10 +299,10 @@ export default function MarketingPage() {
           <Zap size={12} fill="currentColor" /> v1.0.0 Stable Release
         </Pill>
 
-        <Title>
+        <HeroTitle>
           Ingest at <br />
           <span>Hyperspeed.</span>
-        </Title>
+        </HeroTitle>
 
         <Subtitle>
           The observability platform for the AI era. Built with Go, TimescaleDB,
