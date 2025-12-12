@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import ProjectList from "@/components/features/projects/ProjectList";
 import { useLogStream } from "@/hooks/useLogStream";
-import { Project } from "@/lib/types"; // Using our shared type
 import LogList from "@/components/features/logs/Loglist";
 import { useToast } from "@/providers/ToastProvider";
 import { LogToolbar } from "@/components/features/logs/LogToolbar";
@@ -17,6 +16,8 @@ import { Settings } from "lucide-react";
 import SettingsModal from "@/components/features/settings/SettingsModal";
 import { DashboardGrid } from "@/components/layout/DashboardGrid";
 import { useDashboard } from "@/providers/DashboardProviders";
+import { LogEntry } from "@/lib/types";
+import { getLogsAction } from "@/actions/logs";
 
 // Helper for the header button
 const HeaderBtn = styled.button`
@@ -64,20 +65,51 @@ export default function DashboardClient({
   const currentProjectName =
     projects.find((p) => p.id === selectedProjectId)?.name || "Select Project";
 
-  // Get raw logs from your hook
-  const { logs, status } = useLogStream(selectedProjectId || 0, token);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // LOGIC: Filter logs before rendering
-  // This is efficient enough for < 10k logs in client memory
-  const filteredLogs = logs.filter((log) => {
-    if (!searchQuery) return true;
-    const lowerQuery = searchQuery.toLowerCase();
-    return (
-      log.message.toLowerCase().includes(lowerQuery) ||
-      log.service.toLowerCase().includes(lowerQuery) ||
-      log.level.toLowerCase().includes(lowerQuery)
-    );
-  });
+  useEffect(() => {
+    if (!selectedProjectId) return;
+
+    let ignore = false;
+
+    const fetchHistory = async () => {
+      setIsSearching(true);
+      const res = await getLogsAction(selectedProjectId, searchQuery);
+      if (!ignore && res.success) {
+        setLogs(res.data);
+      }
+      setIsSearching(false);
+    };
+
+    const timer = setTimeout(fetchHistory, 3000);
+
+    return () => {
+      ignore = true;
+      clearTimeout(timer);
+    };
+  }, [selectedProjectId, searchQuery]);
+
+  // Get raw logs from your hook
+  const { logs: liveLogs, status } = useLogStream(
+    selectedProjectId || 0,
+    token
+  );
+
+  useEffect(() => {
+    if (liveLogs.length === 0) return;
+
+    const latestLog = liveLogs[0];
+    const matchesQuery =
+      !searchQuery ||
+      latestLog.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      latestLog.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      latestLog.level.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (matchesQuery) {
+      setLogs((prev) => [latestLog, ...prev]);
+    }
+  }, [liveLogs, searchQuery]);
 
   console.log(projects, "----------------");
 
@@ -198,7 +230,7 @@ export default function DashboardClient({
               onRefresh={() => {}}
             />
             <div style={{ flex: 1 }}>
-              <LogList logs={filteredLogs} />
+              <LogList logs={logs} />
             </div>
           </div>
         }

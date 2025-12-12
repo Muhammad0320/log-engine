@@ -2,11 +2,11 @@ import { fetchClient } from "@/lib/client";
 import { getSession } from "@/lib/session";
 import { LogEntry } from "@/lib/types";
 
-export async function getLogsAction(projectId: string, query: string = "") {
+export async function getLogsAction(projectId: number, query: string = "") {
   const token = await getSession();
 
   const params = new URLSearchParams();
-  params.set("project_id", projectId);
+  params.set("project_id", projectId + "");
   if (query) params.set("q", query);
   params.set("limit", "100");
 
