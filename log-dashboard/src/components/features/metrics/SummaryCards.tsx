@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { fetchClient } from "@/lib/client";
 import { Activity, AlertTriangle, Layers, Zap } from "lucide-react";
-import { BorderBeam } from "@/components/ui/borderBeamButton";
+import { BorderBeamButton } from "@/components/ui/borderBeamButton";
 
 // --- 1. Strong Typing ---
 // Matches 'LogSummary' struct in internals/database/db.go
@@ -107,11 +107,9 @@ export default function SummaryCards({
         {[1, 2, 3, 4].map((i) => (
           <Card key={i}>
             {/* The Travelling Light Animation */}
-            <BorderBeam
-              duration={3}
-              color={i % 2 === 0 ? "#ff6b6b" : "#58a6ff"}
-            />
-            <div style={{ height: "40px", opacity: 0.3 }}>Initializing...</div>
+            <BorderBeamButton color={i % 2 === 0 ? "#ff6b6b" : "#58a6ff"}>
+              Initialiing...
+            </BorderBeamButton>
           </Card>
         ))}
       </Grid>
