@@ -3,6 +3,7 @@
 import styled from "styled-components";
 import Link from "next/link";
 import { BorderBeamButton } from "@/components/ui/borderBeamButton";
+import Footer from "@/components/layout/Footer";
 
 const Nav = styled.nav`
   display: flex;
@@ -94,6 +95,7 @@ export default function MarketingLayout({
         </AuthButtons>
       </Nav>
       <MainContent>{children}</MainContent>
+      <Footer />
     </div>
   );
 }
