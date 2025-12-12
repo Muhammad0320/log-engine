@@ -22,6 +22,7 @@ export type CreateProjectState = {
     apiKey: string;
     apiSecret: string;
     projectId: number;
+    name: string;
   };
 };
 
