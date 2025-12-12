@@ -69,7 +69,7 @@ export default function DashboardClient({
   // Pass the selected project ID. The hook handles connecting/disconnecting/buffering.
   // 3. Derived UI State
   const currentProjectName =
-    projects?.find((p) => p.id === selectedProject)?.name || "Select Project";
+    projects.find((p) => p.id === selectedProject)?.name || "Select Project";
 
   // Get raw logs from your hook
   const { logs, status } = useLogStream(selectedProject || 0, token);
@@ -85,6 +85,8 @@ export default function DashboardClient({
       log.level.toLowerCase().includes(lowerQuery)
     );
   });
+
+  console.log(projects, "----------------");
 
   if (projects.length === 0) {
     return (
