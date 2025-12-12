@@ -50,9 +50,9 @@ const LiveBadge = styled.span`
   padding: 2px 8px;
   border-radius: 12px;
   border: 1px solid rgba(46, 204, 113, 0.2);
-  
+
   &::before {
-    content: '';
+    content: "";
     width: 6px;
     height: 6px;
     border-radius: 50%;
@@ -66,7 +66,13 @@ interface StatPoint {
   count: number;
 }
 
-export default function VolumeChart({ projectId }: { projectId: number | null }) {
+export default function VolumeChart({
+  projectId,
+  token,
+}: {
+  projectId: number | null;
+  token: string;
+}) {
   const [data, setData] = useState<StatPoint[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,16 +84,21 @@ export default function VolumeChart({ projectId }: { projectId: number | null })
         // Fetch last 1 hour, bucketed by 1 minute
         // Ideally, you'd use a library like swr or tanstack-query here for auto-refresh
         const res = await fetchClient<{ stats: StatPoint[] }>(
-          `/logs/stats?project_id=${projectId}&bucket=1m`
+          `/logs/stats?project_id=${projectId}&bucket=1m`,
+          { method: "GET" },
+          token
         );
-        
+
         // Transform for Recharts (parse dates if needed)
-        const formatted = res.stats.map(s => ({
-            ...s,
-            // Format time to HH:MM for the axis
-            displayTime: new Date(s.bucket).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        const formatted = res.stats.map((s) => ({
+          ...s,
+          // Format time to HH:MM for the axis
+          displayTime: new Date(s.bucket).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         }));
-        
+
         setData(formatted);
       } catch (err) {
         console.error("Failed to load charts", err);
@@ -98,14 +109,16 @@ export default function VolumeChart({ projectId }: { projectId: number | null })
 
     loadData();
     // Poll every 30 seconds for "live" feel without websockets overkill
-    const interval = setInterval(loadData, 30000); 
+    const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
-  }, [projectId]);
+  }, [projectId, token]);
 
   if (loading) {
     return (
       <ChartContainer>
-        <Header><Title>Ingestion Volume</Title></Header>
+        <Header>
+          <Title>Ingestion Volume</Title>
+        </Header>
         <Skeleton height="100%" width="100%" />
       </ChartContainer>
     );
@@ -117,42 +130,50 @@ export default function VolumeChart({ projectId }: { projectId: number | null })
         <Title>Ingestion Volume</Title>
         <LiveBadge>LIVE 1H</LiveBadge>
       </Header>
-      
+
       <div style={{ flex: 1, minHeight: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#58a6ff" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#58a6ff" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#58a6ff" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#58a6ff" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#30363d" vertical={false} />
-            <XAxis 
-                dataKey="displayTime" 
-                stroke="#8b949e" 
-                fontSize={10} 
-                tickLine={false} 
-                axisLine={false}
-                minTickGap={30}
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#30363d"
+              vertical={false}
             />
-            <YAxis 
-                stroke="#8b949e" 
-                fontSize={10} 
-                tickLine={false} 
-                axisLine={false} 
+            <XAxis
+              dataKey="displayTime"
+              stroke="#8b949e"
+              fontSize={10}
+              tickLine={false}
+              axisLine={false}
+              minTickGap={30}
             />
-            <Tooltip 
-                contentStyle={{ backgroundColor: '#161b22', borderColor: '#30363d', fontSize: '12px' }}
-                itemStyle={{ color: '#c9d1d9' }}
+            <YAxis
+              stroke="#8b949e"
+              fontSize={10}
+              tickLine={false}
+              axisLine={false}
             />
-            <Area 
-                type="monotone" 
-                dataKey="count" 
-                stroke="#58a6ff" 
-                strokeWidth={2}
-                fillOpacity={1} 
-                fill="url(#colorCount)" 
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#161b22",
+                borderColor: "#30363d",
+                fontSize: "12px",
+              }}
+              itemStyle={{ color: "#c9d1d9" }}
+            />
+            <Area
+              type="monotone"
+              dataKey="count"
+              stroke="#58a6ff"
+              strokeWidth={2}
+              fillOpacity={1}
+              fill="url(#colorCount)"
             />
           </AreaChart>
         </ResponsiveContainer>

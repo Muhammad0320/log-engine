@@ -6,6 +6,7 @@ import { fetchClient } from "@/lib/client";
 import { BorderBeamButton } from "@/components/ui/borderBeamButton";
 import { useToast } from "@/providers/ToastProvider";
 import { UserPlus, Shield } from "lucide-react";
+import { inviteMemberAction } from "@/actions/members";
 
 const Section = styled.div`
   margin-bottom: 24px;
@@ -58,10 +59,9 @@ export default function SettingsModal({ projectId }: { projectId: number }) {
     setLoading(true);
 
     try {
-      await fetchClient(`/projects/${projectId}/members`, {
-        method: "POST",
-        body: JSON.stringify({ email, role }),
-      });
+      // Use the Server Action instead of fetchClient
+      await inviteMemberAction(projectId, email, role);
+
       toast.success(`Invited ${email} as ${role}`);
       setEmail("");
     } catch (err) {

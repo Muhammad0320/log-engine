@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DashboardGrid } from "@/app/(dashboard)/dashboard/layout";
 import ProjectList from "@/components/features/projects/ProjectList";
 import { useLogStream } from "@/hooks/useLogStream";
 import { Project } from "@/lib/types"; // Using our shared type
@@ -16,6 +15,7 @@ import VolumeChart from "@/components/features/metrics/VolumeChart";
 import styled from "styled-components";
 import { Settings } from "lucide-react";
 import SettingsModal from "@/components/features/settings/SettingsModal";
+import { DashboardGrid } from "@/components/layout/DashboardGrid";
 
 // Helper for the header button
 const HeaderBtn = styled.button`
