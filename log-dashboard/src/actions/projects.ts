@@ -1,6 +1,7 @@
 "use server";
 
 import { fetchClient } from "@/lib/client";
+import { getSession } from "@/lib/session";
 import { getErrorMessage, Project } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -28,6 +29,8 @@ export async function createProjectAction(
   _: CreateProjectState,
   formData: FormData
 ): Promise<CreateProjectState> {
+  const token = await getSession();
+
   const validated = CreateProjectSchema.safeParse({
     name: formData.get("name"),
   });
@@ -44,10 +47,14 @@ export async function createProjectAction(
       project_id: number;
       api_key: string;
       api_secret: string;
-    }>("/projects", {
-      method: "POST",
-      body: JSON.stringify({ name: validated.data.name }),
-    });
+    }>(
+      "/projects",
+      {
+        method: "POST",
+        body: JSON.stringify({ name: validated.data.name }),
+      },
+      token
+    );
 
     revalidatePath("/");
     return {
@@ -74,10 +81,16 @@ export async function createProjectAction(
 type FetchResult<T> = Promise<[T, null] | [null, string]>;
 
 export async function getProjects(): Promise<FetchResult<Project[]>> {
+  const token = await getSession();
+
   try {
-    const projects = await fetchClient<Project[]>("/projects", {
-      method: "GET",
-    });
+    const projects = await fetchClient<Project[]>(
+      "/projects",
+      {
+        method: "GET",
+      },
+      token
+    );
 
     return [projects, null];
   } catch (err) {
