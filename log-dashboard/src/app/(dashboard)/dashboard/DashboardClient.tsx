@@ -16,6 +16,7 @@ import styled from "styled-components";
 import { Settings } from "lucide-react";
 import SettingsModal from "@/components/features/settings/SettingsModal";
 import { DashboardGrid } from "@/components/layout/DashboardGrid";
+import { useDashboard } from "@/providers/DashboardProviders";
 
 // Helper for the header button
 const HeaderBtn = styled.button`
@@ -34,45 +35,37 @@ const HeaderBtn = styled.button`
   }
 `;
 
-interface DashboardClientProps {
-  initialProjects: Project[];
-  token: string;
-  serverError: string | null;
-}
-
 export default function DashboardClient({
-  initialProjects,
-  token,
   serverError,
-}: DashboardClientProps) {
+}: {
+  serverError: string | null;
+}) {
   const toast = useToast();
 
+  const {
+    projects,
+    selectedProjectId,
+    setSelectedProjectId,
+    isCreateOpen,
+    isSettingsOpen,
+    setSettingsOpen,
+    setCreateOpen,
+    addProject,
+    token,
+  } = useDashboard();
+
   useEffect(() => {
-    if (serverError) {
-      toast.error(serverError);
-    }
+    if (serverError) toast.error(serverError);
   }, [serverError, toast]);
 
-  // 1. State Management
-  // We initialize with server data, but keep local state for client-side updates if needed
-  const [projects] = useState<Project[]>(initialProjects);
-
-  // Default to the first project if available
-  const [selectedProject, setSelectedProject] = useState<number | null>(
-    initialProjects?.length > 0 ? initialProjects[0].id : null
-  );
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // 2. WebSocket Connection
-  // Pass the selected project ID. The hook handles connecting/disconnecting/buffering.
   // 3. Derived UI State
   const currentProjectName =
-    projects.find((p) => p.id === selectedProject)?.name || "Select Project";
+    projects.find((p) => p.id === selectedProjectId)?.name || "Select Project";
 
   // Get raw logs from your hook
-  const { logs, status } = useLogStream(selectedProject || 0, token);
+  const { logs, status } = useLogStream(selectedProjectId || 0, token);
 
   // LOGIC: Filter logs before rendering
   // This is efficient enough for < 10k logs in client memory
@@ -98,18 +91,18 @@ export default function DashboardClient({
             background: "var(--bg-color)",
           }}
         >
-          <EmptyState onCreate={() => setIsCreateOpen(true)} />
+          <EmptyState onCreate={() => setCreateOpen(true)} />
         </div>
 
         <Modal
           isOpen={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
+          onClose={() => setCreateOpen(false)}
           title="Initialize Project"
         >
           <CreateProjectForm
             onProjectCreated={(data) => {
-              // Force reload to refresh server data for simplicity
-              window.location.reload();
+              addProject({ id: data.projectId, name: "New Project" });
+              setCreateOpen(false);
             }}
             addOptimistic={() => {}}
           />
@@ -150,7 +143,7 @@ export default function DashboardClient({
 
             {/* Settings Button */}
             <HeaderBtn
-              onClick={() => setIsSettingsOpen(true)}
+              onClick={() => setSettingsOpen(true)}
               style={{ marginLeft: "12px" }}
             >
               <Settings size={14} />
@@ -189,12 +182,12 @@ export default function DashboardClient({
         // --- SIDEBAR (Project Switcher) ---
         sidebar={
           <ProjectList
-            initialProjects={initialProjects}
-            selectedId={selectedProject}
-            onSelect={(id) => setSelectedProject(id)}
+            initialProjects={projects}
+            selectedId={selectedProjectId}
+            onSelect={(id) => setSelectedProjectId(id)}
           />
         }
-        metrics={<SummaryCards projectId={selectedProject} token={token} />}
+        metrics={<SummaryCards projectId={selectedProjectId} token={token} />}
         logs={
           <div
             style={{ display: "flex", flexDirection: "column", height: "100%" }}
@@ -209,14 +202,14 @@ export default function DashboardClient({
             </div>
           </div>
         }
-        charts={<VolumeChart projectId={selectedProject} token={token} />}
+        charts={<VolumeChart projectId={selectedProjectId} token={token} />}
       />
       <Modal
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={() => setSettingsOpen(false)}
         title="Project Settings"
       >
-        {selectedProject && <SettingsModal projectId={selectedProject} />}
+        {selectedProjectId && <SettingsModal projectId={selectedProjectId} />}
       </Modal>
     </>
   );
