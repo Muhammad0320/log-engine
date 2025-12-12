@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { z } from "zod";
 
 export interface AuthFormState {
@@ -63,4 +64,20 @@ export type RegisterFormState = {
     _form?: string[];
   };
   message?: string;
+};
+
+export const InviteSchema = z.object({
+  email: z.email({ error: "Invalid email address" }),
+  role: z.enum(["admin", "viewer"]),
+  projectId: z.coerce.number(), // hidden fields or passed via bind
+});
+
+export type InvideState = {
+  errors?: {
+    email?: string[];
+    role?: string[];
+    _form?: string[];
+  };
+  message?: string;
+  success?: boolean;
 };
