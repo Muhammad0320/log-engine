@@ -8,6 +8,31 @@ import { Project } from "@/lib/types"; // Using our shared type
 import LogList from "@/components/features/logs/Loglist";
 import { useToast } from "@/providers/ToastProvider";
 import { LogToolbar } from "@/components/features/logs/LogToolbar";
+import CreateProjectForm from "@/components/features/projects/createProjectForm";
+import { Modal } from "@/components/ui/Modal";
+import EmptyState from "@/components/features/dashboard/EmptyState";
+import SummaryCards from "@/components/features/metrics/SummaryCards";
+import VolumeChart from "@/components/features/metrics/VolumeChart";
+import styled from "styled-components";
+import { Settings } from "lucide-react";
+import SettingsModal from "@/components/features/settings/SettingsModal";
+
+// Helper for the header button
+const HeaderBtn = styled.button`
+  background: transparent;
+  border: 1px solid #30363d;
+  color: #8b949e;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover {
+    color: #fff;
+    border-color: #58a6ff;
+  }
+`;
 
 interface DashboardClientProps {
   initialProjects: Project[];
@@ -36,14 +61,15 @@ export default function DashboardClient({
   const [selectedProject, setSelectedProject] = useState<number | null>(
     initialProjects?.length > 0 ? initialProjects[0].id : null
   );
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 2. WebSocket Connection
   // Pass the selected project ID. The hook handles connecting/disconnecting/buffering.
   // 3. Derived UI State
   const currentProjectName =
     projects?.find((p) => p.id === selectedProject)?.name || "Select Project";
-
-  const [searchQuery, setSearchQuery] = useState("");
 
   // Get raw logs from your hook
   const { logs, status } = useLogStream(selectedProject || 0, token);
@@ -60,111 +86,136 @@ export default function DashboardClient({
     );
   });
 
-  return (
-    <DashboardGrid
-      // --- HEADER ---
-      header={
+  if (projects.length === 0) {
+    return (
+      <>
         <div
           style={{
-            display: "flex",
-            gap: "1rem",
-            alignItems: "center",
-            color: "#fff",
+            height: "100vh",
+            padding: "24px",
+            background: "var(--bg-color)",
           }}
         >
-          <h2
-            style={{
-              fontWeight: 700,
-              fontSize: "18px",
-              letterSpacing: "-0.5px",
-            }}
-          >
-            LogEngine
-          </h2>
-          <div
-            style={{ height: "20px", width: "1px", background: "#30363d" }}
-          />
-          <span style={{ fontSize: "14px", fontWeight: 500 }}>
-            {currentProjectName}
-          </span>
+          <EmptyState onCreate={() => setIsCreateOpen(true)} />
+        </div>
 
-          {/* Connection Status Indicator */}
+        <Modal
+          isOpen={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
+          title="Initialize Project"
+        >
+          <CreateProjectForm
+            onProjectCreated={(data) => {
+              // Force reload to refresh server data for simplicity
+              window.location.reload();
+            }}
+            addOptimistic={() => {}}
+          />
+        </Modal>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <DashboardGrid
+        // --- HEADER ---
+        header={
           <div
             style={{
               display: "flex",
+              gap: "1rem",
               alignItems: "center",
-              gap: "6px",
-              marginLeft: "auto",
-              fontSize: "12px",
-              color: "#8b949e",
-              background: "#21262d",
-              padding: "4px 8px",
-              borderRadius: "20px",
-              border: "1px solid #30363d",
+              color: "#fff",
+              width: "100%",
             }}
           >
-            <span
+            <h2
               style={{
-                height: "6px",
-                width: "6px",
-                borderRadius: "50%",
-                backgroundColor:
-                  status === "OPEN"
-                    ? "#2ecc71"
-                    : status === "CONNECTING"
-                    ? "#f1c40f"
-                    : "#e74c3c",
-                boxShadow:
-                  status === "OPEN"
-                    ? "0 0 8px rgba(46, 204, 113, 0.4)"
-                    : "none",
+                fontWeight: 700,
+                fontSize: "18px",
+                letterSpacing: "-0.5px",
               }}
+            >
+              LogEngine
+            </h2>
+            <div
+              style={{ height: "20px", width: "1px", background: "#30363d" }}
             />
-            {status}
+            <span style={{ fontSize: "14px", fontWeight: 500 }}>
+              {currentProjectName}
+            </span>
+
+            {/* Settings Button */}
+            <HeaderBtn
+              onClick={() => setIsSettingsOpen(true)}
+              style={{ marginLeft: "12px" }}
+            >
+              <Settings size={14} />
+            </HeaderBtn>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                marginLeft: "auto",
+                fontSize: "12px",
+                color: "#8b949e",
+                background: "#21262d",
+                padding: "4px 8px",
+                borderRadius: "20px",
+                border: "1px solid #30363d",
+              }}
+            >
+              <span
+                style={{
+                  height: "6px",
+                  width: "6px",
+                  borderRadius: "50%",
+                  backgroundColor: status === "OPEN" ? "#2ecc71" : "#e74c3c",
+                  boxShadow:
+                    status === "OPEN"
+                      ? "0 0 8px rgba(46, 204, 113, 0.4)"
+                      : "none",
+                }}
+              />
+              {status}
+            </div>
           </div>
-        </div>
-      }
-      // --- SIDEBAR (Project Switcher) ---
-      sidebar={
-        <ProjectList
-          initialProjects={initialProjects}
-          selectedId={selectedProject}
-          onSelect={(id) => setSelectedProject(id)}
-        />
-      }
-      // --- METRICS (Placeholder for now) ---
-      metrics={
-        <div style={{ color: "#8b949e", fontSize: "13px" }}>
-          {/* We will add the MetricsSection here later */}
-          Live Metrics Incoming...
-        </div>
-      }
-      // --- CHARTS (Placeholder) ---
-      charts={
-        <div style={{ color: "#8b949e", fontSize: "13px" }}>
-          Volume Analytics
-        </div>
-      }
-      logs={
-        <div
-          style={{ display: "flex", flexDirection: "column", height: "100%" }}
-        >
-          <LogToolbar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onRefresh={() => {}}
+        }
+        // --- SIDEBAR (Project Switcher) ---
+        sidebar={
+          <ProjectList
+            initialProjects={initialProjects}
+            selectedId={selectedProject}
+            onSelect={(id) => setSelectedProject(id)}
           />
-          <div style={{ flex: 1 }}>
-            {selectedProject ? (
-              <LogList logs={filteredLogs} /> // Pass filtered logs!
-            ) : (
-              <div style={{ padding: 20, color: "#8b949e" }}>
-                Select a project
-              </div>
-            )}
+        }
+        metrics={<SummaryCards projectId={selectedProject} />}
+        logs={
+          <div
+            style={{ display: "flex", flexDirection: "column", height: "100%" }}
+          >
+            <LogToolbar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              onRefresh={() => {}}
+            />
+            <div style={{ flex: 1 }}>
+              <LogList logs={filteredLogs} />
+            </div>
           </div>
-        </div>
-      }
-    />
+        }
+        charts={<VolumeChart projectId={selectedProject} />}
+      />
+      <Modal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        title="Project Settings"
+      >
+        {selectedProject && <SettingsModal projectId={selectedProject} />}
+      </Modal>
+    </>
   );
 }
