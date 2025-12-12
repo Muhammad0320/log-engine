@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import styled from "styled-components";
 import { fetchClient } from "@/lib/client";
 import { BorderBeamButton } from "@/components/ui/borderBeamButton";
 import { useToast } from "@/providers/ToastProvider";
 import { UserPlus, Shield } from "lucide-react";
 import { inviteMemberAction } from "@/actions/members";
+import { InviteState } from "@/lib/definitions";
 
 const Section = styled.div`
   margin-bottom: 24px;
@@ -48,32 +49,23 @@ const Select = styled.select`
   border-radius: 6px;
 `;
 
+const initialState: InviteState = {};
+
 export default function SettingsModal({ projectId }: { projectId: number }) {
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState("viewer");
-  const [loading, setLoading] = useState(false);
   const toast = useToast();
 
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const [state, action, isPending] = useActionState(
+    inviteMemberAction,
+    initialState
+  );
 
-    try {
-      // Use the Server Action instead of fetchClient
-      await inviteMemberAction(projectId, email, role);
-
-      toast.success(`Invited ${email} as ${role}`);
-      setEmail("");
-    } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message || "Failed to invite member");
-      } else {
-        toast.error("Failed to invite member");
-      }
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (state.success && state.message) {
+      toast.success(state.message);
+    } else if (state.errors?._form) {
+      toast.error(state.errors._form[0]);
     }
-  };
+  }, [state, toast]);
 
   return (
     <div>
@@ -81,16 +73,16 @@ export default function SettingsModal({ projectId }: { projectId: number }) {
         <SectionTitle>
           <UserPlus size={16} /> Invite Team Member
         </SectionTitle>
-        <form onSubmit={handleInvite}>
+        <form action={action}>
+          <input type="hidden" name="projectId" value={projectId} />
           <InputGroup>
             <Input
               type="email"
               placeholder="colleague@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
               required
             />
-            <Select value={role} onChange={(e) => setRole(e.target.value)}>
+            <Select name="role" defaultValue={"viewer"}>
               <option value="viewer">Viewer</option>
               <option value="admin">Admin</option>
             </Select>
@@ -98,7 +90,7 @@ export default function SettingsModal({ projectId }: { projectId: number }) {
           <div style={{ marginTop: "12px" }}>
             <BorderBeamButton
               type="submit"
-              isLoading={loading}
+              isLoading={isPending}
               variant="primary"
             >
               Send Invite
