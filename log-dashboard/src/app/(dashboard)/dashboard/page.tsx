@@ -3,7 +3,6 @@ import { getSession } from "@/lib/session";
 import DashboardClient from "./DashboardClient"; // Your big component
 
 export default async function DashboardPage() {
-  // 1. Get the Token (Cookies) - Server Side
   const token = await getSession();
 
   // 2. Fetch Data (Directly from Backend API) - Server Side
