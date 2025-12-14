@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useOptimistic, useRef, useState } from "react";
 import ProjectList from "@/components/features/projects/ProjectList";
 import { useLogStream } from "@/hooks/useLogStream";
 import LogList from "@/components/features/logs/Loglist";
@@ -16,7 +16,7 @@ import { Settings } from "lucide-react";
 import SettingsModal from "@/components/features/settings/SettingsModal";
 import { DashboardGrid } from "@/components/layout/DashboardGrid";
 import { useDashboard } from "@/providers/DashboardProviders";
-import { LogEntry } from "@/lib/types";
+import { LogEntry, Project } from "@/lib/types";
 import { getLogsAction } from "@/actions/logs";
 import KeyRevel from "@/components/features/projects/KeyReveal";
 
@@ -74,14 +74,29 @@ export default function DashboardClient({
     if (serverError) toast.error(serverError);
   }, [serverError, toast]);
 
+  const [optimisticProjects, addOptimistic] = useOptimistic<Project[], Project>(
+    projects,
+    (state, newProject) => {
+      const existing = state.find((p) => p.id === newProject.id);
+
+      if (existing) {
+        return state.map((p) => (p.id === newProject.id ? newProject : p));
+      }
+
+      return [{ ...newProject, pending: true }, ...state];
+    }
+  );
+
   const [searchQuery, setSearchQuery] = useState("");
-
-  // 3. Derived UI State
-  const currentProjectName =
-    projects.find((p) => p.id === selectedProjectId)?.name || "Select Project";
-
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Infinite scroll state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(100);
+  const [hasMore, setHasMore] = useState(true);
+  const logsContainerRef = useRef<HTMLDivElement>(null);
+
   const [modalState, setModalState] = useState<{
     mode: "CREATE" | "KEYS";
     data?: {
@@ -92,26 +107,33 @@ export default function DashboardClient({
     };
   } | null>(null);
 
+  // --- Logic 1: Reset state
   useEffect(() => {
-    if (isCreateOpen) setModalState({ mode: "CREATE" });
-    else if (modalState?.mode === "CREATE") setModalState(null);
-  }, [isCreateOpen, modalState?.mode]);
+    // Ruthless menthor
+    if (page !== 1) setPage(1);
+    else {
+      setLogs([]);
+      setHasMore(true);
+    }
+  }, [selectedProjectId, searchQuery, limit]);
 
-  const handleCloseModal = () => {
-    setModalState(null);
-    setCreateOpen(false);
-  };
-
+  // --- Logic 2: Fetching history
   useEffect(() => {
     if (!selectedProjectId) return;
+    if (!hasMore && page > 1) return;
 
     let ignore = false;
 
     const fetchHistory = async () => {
       setIsSearching(true);
-      const res = await getLogsAction(selectedProjectId, searchQuery);
+      const res = await getLogsAction(
+        selectedProjectId,
+        searchQuery,
+        page,
+        limit
+      );
       if (!ignore && res.success) {
-        setLogs(res.data);
+        setLogs((prev) => (page === 1 ? res.data : [...prev, ...res.data]));
       }
       setIsSearching(false);
     };
@@ -122,14 +144,32 @@ export default function DashboardClient({
       ignore = true;
       clearTimeout(timer);
     };
-  }, [selectedProjectId, searchQuery]);
+  }, [selectedProjectId, searchQuery, page, limit, hasMore]);
+
+  // -- Infinite scroll
+  useEffect(() => {
+    const element = logContainerRef.current;
+    if (!element || !hasMore || isSearching) return;
+
+    const handleScroll = () => {
+      // Checks is user is 90% of the way to the bottom (the last log)
+      const isNearBottom =
+        element.scrollTop + element.clientHeight >= element.scrollHeight * 0.9;
+
+      if (isNearBottom) {
+        setPage((prev) => prev + 1);
+      }
+
+      element.addEventListener("scroll", handleScroll);
+      return () => element.removeEventListener("scroll", handleScroll);
+    };
+  }, [hasMore, isSearching]);
 
   // Get raw logs from your hook
   const { logs: liveLogs, status } = useLogStream(
     selectedProjectId || 0,
     token
   );
-
   const lastProcessedRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -144,9 +184,25 @@ export default function DashboardClient({
     lastProcessedRef.current = latestLog.timestamp;
 
     if (matchLog(latestLog, searchQuery)) {
-      setLogs((prev) => [latestLog, ...prev]);
+      setTimeout(() => {
+        setLogs((prev) => [latestLog, ...prev]);
+      }, 0);
     }
   }, [liveLogs, searchQuery]);
+
+  useEffect(() => {
+    if (isCreateOpen) setModalState({ mode: "CREATE" });
+    else if (modalState?.mode === "CREATE") setModalState(null);
+  }, [isCreateOpen, modalState?.mode]);
+
+  const handleCloseModal = () => {
+    setModalState(null);
+    setCreateOpen(false);
+  };
+
+  // 3. Derived UI State
+  const currentProjectName =
+    projects.find((p) => p.id === selectedProjectId)?.name || "Select Project";
 
   if (projects.length === 0) {
     return (
@@ -179,7 +235,9 @@ export default function DashboardClient({
                 // switch modal to key revel mode
                 setModalState({ mode: "KEYS", data });
               }}
-              addOptimistic={() => {}}
+              addOptimistic={(newProject) =>
+                addOptimistic({ ...newProject, id: -1 })
+              }
             />
           )}
           {modalState?.mode === "KEYS" && modalState.data && (
@@ -261,10 +319,10 @@ export default function DashboardClient({
         // --- SIDEBAR (Project Switcher) ---
         sidebar={
           <ProjectList
-            initialProjects={projects}
+            initialProjects={optimisticProjects}
             selectedId={selectedProjectId}
             onSelect={(id) => setSelectedProjectId(id)}
-            onAddClick={() => setCreateOpen(true)}
+            onAddClick={() => setModalState({ mode: "CREATE" })}
           />
         }
         metrics={<SummaryCards projectId={selectedProjectId} token={token} />}
@@ -275,27 +333,59 @@ export default function DashboardClient({
             <LogToolbar
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
-              onRefresh={() => {}}
+              onRefresh={() => setPage(1)}
+              limit={limit}
+              setLimit={setLimit}
             />
-            <div style={{ flex: 1 }}>
-              {isSearching && (
+            <div
+              ref={logsContainerRef}
+              style={{ flex: 1, position: "relative", overflowY: "auto" }}
+            >
+              {isSearching &&
+                page === 1 && ( // Show searching overlay only on the initial load
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      backdropFilter: "blur(2px)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: 10,
+                      backgroundColor: "rgba(13, 17, 23, 0.5)",
+                    }}
+                  >
+                    <p style={{ color: "#58a6ff", fontSize: "13px" }}>
+                      Searching...
+                    </p>
+                  </div>
+                )}
+              <LogList logs={logs} />
+              {/* Show loading spinner for subsequent pages */}
+              {isSearching && page > 1 && (
                 <div
                   style={{
-                    position: "absolute",
-                    inset: 0,
-                    backdropFilter: "blur(2px)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    zIndex: 10,
-                    backgroundColor: "rgba(13, 17, 23, 0.5)",
+                    padding: "10px",
+                    textAlign: "center",
+                    color: "#8b949e",
+                    fontSize: "12px",
                   }}
                 >
-                  <p style={{ color: "#58a6ff" }}>Searching...</p>
-                  {/* Replace with a cool spinner component later */}
+                  Loading more...
                 </div>
               )}
-              <LogList logs={logs} />
+              {!hasMore && logs.length > 0 && (
+                <div
+                  style={{
+                    padding: "10px",
+                    textAlign: "center",
+                    color: "#8b949e",
+                    fontSize: "12px",
+                  }}
+                >
+                  End of Logs
+                </div>
+              )}
             </div>
           </div>
         }
