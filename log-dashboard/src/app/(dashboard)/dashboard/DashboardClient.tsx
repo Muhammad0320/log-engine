@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ProjectList from "@/components/features/projects/ProjectList";
 import { useLogStream } from "@/hooks/useLogStream";
 import LogList from "@/components/features/logs/Loglist";
@@ -36,6 +36,20 @@ const HeaderBtn = styled.button`
     border-color: #58a6ff;
   }
 `;
+
+const matchLog = (log: LogEntry, query: string) => {
+  if (!query) return false;
+
+  const lowerQuery = query.toLowerCase();
+  const searchTokens = lowerQuery.split(" ").filter(Boolean);
+
+  return searchTokens.every(
+    (token) =>
+      log.message.includes(token) ||
+      log.service.includes(token) ||
+      log.service.includes(token)
+  );
+};
 
 export default function DashboardClient({
   serverError,
@@ -105,22 +119,20 @@ export default function DashboardClient({
     token
   );
 
+  const lastProcessedRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (liveLogs.length === 0) return;
 
     const latestLog = liveLogs[0];
-    const lowerQuery = searchQuery.toLowerCase();
 
-    let matchesQuery = true;
+    // Guard against readding old logs when the the seachQuery changes
+    if (latestLog.timestamp === lastProcessedRef.current) return;
 
-    if (lowerQuery) {
-      matchesQuery =
-        latestLog.message.toLowerCase().includes(lowerQuery) ||
-        latestLog.service.toLowerCase().includes(lowerQuery) ||
-        latestLog.level.toLowerCase().includes(lowerQuery);
-    }
+    // Mark log as processed
+    lastProcessedRef.current = latestLog.timestamp;
 
-    if (matchesQuery) {
+    if (matchLog(latestLog, searchQuery)) {
       setLogs((prev) => [latestLog, ...prev]);
     }
   }, [liveLogs, searchQuery]);
