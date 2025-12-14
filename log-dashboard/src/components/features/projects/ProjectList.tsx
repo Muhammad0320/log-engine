@@ -202,50 +202,6 @@ export default function ProjectList({
           {p.pending && <Loader2 size={12} className="animate-spin" />}
         </ProjectItem>
       ))}
-
-      <Modal
-        isOpen={isCreateOpen}
-        onClose={closeAndReset}
-        title={createdKeys ? "Connect Your Agent" : "Create New Project"}
-      >
-        {!createdKeys ? (
-          // STEP 1: Create Form
-          <CreateProjectForm
-            onProjectCreated={handleProjectCreated}
-            addOptimistic={handleAddOptimistic}
-          />
-        ) : (
-          // STEP 2: Key Reveal (The "Success" State)
-          <div>
-            <p
-              style={{
-                fontSize: "13px",
-                color: "#8b949e",
-                marginBottom: "16px",
-              }}
-            >
-              These keys will <strong>only be shown once</strong>. Copy them
-              now.
-            </p>
-
-            <KeyContainer>
-              <KeyRow>
-                <KeyLabel>Public Key (PK)</KeyLabel>
-                <CopyField value={createdKeys.apiKey} />
-              </KeyRow>
-
-              <KeyRow>
-                <KeyLabel>Secret Key (SK)</KeyLabel>
-                <CopyField value={createdKeys.apiSecret} />
-              </KeyRow>
-            </KeyContainer>
-
-            <BorderBeamButton onClick={closeAndReset}>
-              I have saved my keys securely
-            </BorderBeamButton>
-          </div>
-        )}
-      </Modal>
     </Container>
   );
 }
