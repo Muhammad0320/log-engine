@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { useActionState } from "react";
 import styled from "styled-components";
 import { createProjectAction, CreateProjectState } from "@/actions/projects";
 import { useToast } from "@/providers/ToastProvider";
 import { FieldError } from "@/components/ui/formErrors";
 import { BorderBeamButton } from "@/components/ui/borderBeamButton";
+import { useFormState } from "react-dom";
 
 const Input = styled.input`
   width: 100%;
@@ -34,54 +35,56 @@ export default function CreateProjectForm({
     projectId: number;
     name: string;
   }) => void;
-  addOptimistic: (name: string) => void;
+  addOptimistic?: (project: {
+    id: number;
+    name: string;
+    pending: boolean;
+  }) => void;
 }) {
-  const toast = useToast();
-  const [state, formAction, isPending] = useActionState(
-    createProjectAction,
-    initialState
-  );
-  const [transitionPending, startTransition] = useTransition();
+  const [formState, action, isPending] = useActionState(createProjectAction, {
+    success: false,
+    errors: {},
+  });
+  const formRef = useRef<HTMLFormElement>(null);
 
-  // Handle Feedback
   useEffect(() => {
-    if (state.success && state.data) {
-      toast.success("Project created successfully");
-      onProjectCreated(state.data);
-    } else if (state.errors?._form) {
-      toast.error(state.errors._form[0]);
+    if (formState.success && formState.data) {
+      onProjectCreated(formState.data);
+      formRef.current?.reset();
     }
-  }, [state, toast, onProjectCreated]);
+  }, [formState, onProjectCreated]);
 
-  const handleSubmit = (formData: FormData) => {
-    const name = formData.get("name") as string;
-    if (!name) return;
+  const handleSubmit = (form: FormData) => {
+    const name = form.get("name") as string;
 
-    // Optimistic Update (UI first)
-    startTransition(async () => {
-      addOptimistic(name);
-      // Server Request (Data second)
-      await formAction(formData);
-    });
+    if (addOptimistic) {
+      addOptimistic({
+        id: -1,
+        name,
+        pending: true,
+      });
+    }
+
+    action(form);
   };
 
   return (
-    <form action={handleSubmit}>
+    <form ref={formRef} action={handleSubmit}>
       <Input
         name="name"
         placeholder="Project Name (e.g. Production-API)"
         autoFocus
       />
-      <FieldError errors={state.errors?.name} />
+      <FieldError errors={formState.errors?.name} />
 
       <div style={{ marginTop: "20px" }}>
-        <button type="submit" disabled={isPending || transitionPending}>
+        <button type="submit" disabled={isPending}>
           create project
         </button>
         <BorderBeamButton
           type="submit"
-          isLoading={isPending || transitionPending}
-          disabled={isPending || transitionPending}
+          isLoading={isPending}
+          disabled={isPending}
         >
           Create Project
         </BorderBeamButton>
