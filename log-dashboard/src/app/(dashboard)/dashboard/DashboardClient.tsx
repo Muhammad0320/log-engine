@@ -38,10 +38,15 @@ const HeaderBtn = styled.button`
 `;
 
 const matchLog = (log: LogEntry, query: string) => {
-  if (!query) return false;
+  if (!query) return true;
 
   const lowerQuery = query.toLowerCase();
-  const searchTokens = lowerQuery.split(" ").filter(Boolean);
+  const searchTokens = lowerQuery
+    .split(" ")
+    .map((token) => token.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").trim())
+    .filter(Boolean);
+
+  if (searchTokens.length === 0) return true;
 
   return searchTokens.every(
     (token) =>
@@ -148,7 +153,7 @@ export default function DashboardClient({
 
   // -- Infinite scroll
   useEffect(() => {
-    const element = logContainerRef.current;
+    const element = logsContainerRef.current;
     if (!element || !hasMore || isSearching) return;
 
     const handleScroll = () => {
