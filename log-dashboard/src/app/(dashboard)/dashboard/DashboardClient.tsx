@@ -64,6 +64,7 @@ export default function DashboardClient({
     setSelectedProjectId,
     isSettingsOpen,
     setSettingsOpen,
+    isCreateOpen,
     setCreateOpen,
     addProject,
     token,
@@ -83,13 +84,23 @@ export default function DashboardClient({
   const [isSearching, setIsSearching] = useState(false);
   const [modalState, setModalState] = useState<{
     mode: "CREATE" | "KEYS";
-    data: {
+    data?: {
       name: string;
       apiKey: string;
       apiSecret: string;
       projectId: number;
     };
   } | null>(null);
+
+  useEffect(() => {
+    if (isCreateOpen) setModalState({ mode: "CREATE" });
+    else if (modalState?.mode === "CREATE") setModalState(null);
+  }, [isCreateOpen, modalState?.mode]);
+
+  const handleCloseModal = () => {
+    setModalState(null);
+    setCreateOpen(false);
+  };
 
   useEffect(() => {
     if (!selectedProjectId) return;
@@ -105,7 +116,7 @@ export default function DashboardClient({
       setIsSearching(false);
     };
 
-    const timer = setTimeout(fetchHistory, 3000);
+    const timer = setTimeout(fetchHistory, 1000);
 
     return () => {
       ignore = true;
@@ -152,7 +163,7 @@ export default function DashboardClient({
 
         <Modal
           isOpen={!!modalState}
-          onClose={() => setModalState(null)}
+          onClose={handleCloseModal}
           title={
             modalState?.mode === "KEYS"
               ? "Project Initialized"
@@ -171,7 +182,9 @@ export default function DashboardClient({
               addOptimistic={() => {}}
             />
           )}
-          {modalState?.mode === "KEYS" && <KeyRevel data={modalState.data} />}
+          {modalState?.mode === "KEYS" && modalState.data && (
+            <KeyRevel data={modalState.data} onClose={handleCloseModal} />
+          )}
         </Modal>
       </>
     );
@@ -251,6 +264,7 @@ export default function DashboardClient({
             initialProjects={projects}
             selectedId={selectedProjectId}
             onSelect={(id) => setSelectedProjectId(id)}
+            onAddClick={() => setCreateOpen(true)}
           />
         }
         metrics={<SummaryCards projectId={selectedProjectId} token={token} />}
