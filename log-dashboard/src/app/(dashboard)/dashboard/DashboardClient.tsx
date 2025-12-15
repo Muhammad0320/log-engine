@@ -115,10 +115,15 @@ export default function DashboardClient({
   // --- Logic 1: Reset state
   useEffect(() => {
     // Ruthless menthor
-    if (page !== 1) setPage(1);
-    else {
-      setLogs([]);
-      setHasMore(true);
+    if (page !== 1) {
+      setTimeout(() => {
+        setPage(1);
+      }, 0);
+    } else {
+      setTimeout(() => {
+        setLogs([]);
+        setHasMore(true);
+      }, 0);
     }
   }, [selectedProjectId, searchQuery, limit]);
 
@@ -195,8 +200,14 @@ export default function DashboardClient({
   }, [liveLogs, searchQuery]);
 
   useEffect(() => {
-    if (isCreateOpen) setModalState({ mode: "CREATE" });
-    else if (modalState?.mode === "CREATE") setModalState(null);
+    if (isCreateOpen)
+      setTimeout(() => {
+        setModalState({ mode: "CREATE" });
+      }, 0);
+    else if (modalState?.mode === "CREATE")
+      setTimeout(() => {
+        setModalState(null);
+      }, 0);
   }, [isCreateOpen, modalState?.mode]);
 
   const handleCloseModal = () => {
