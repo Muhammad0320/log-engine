@@ -41,31 +41,41 @@ export default function CreateProjectForm({
     pending: boolean;
   }) => void;
 }) {
-  const [formState, action, isPending] = useActionState(createProjectAction, {
-    success: false,
-    errors: {},
-  });
+  const [formState, action, isPending] = useActionState(
+    createProjectAction,
+    initialState
+  );
+  const [isTransitioning, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
+  const toast = useToast();
 
   useEffect(() => {
     if (formState.success && formState.data) {
+      toast.success("Project created successfully");
       onProjectCreated(formState.data);
       formRef.current?.reset();
+    } else if (formState.errors?._form) {
+      toast.error(formState.errors._form[0]);
     }
-  }, [formState, onProjectCreated]);
+  }, [formState, onProjectCreated, toast]);
 
   const handleSubmit = (form: FormData) => {
     const name = form.get("name") as string;
+    if (!name) return;
 
-    if (addOptimistic) {
-      addOptimistic({
-        id: -1,
-        name,
-        pending: true,
-      });
-    }
+    startTransition(() => {
+      if (addOptimistic) {
+        addOptimistic({
+          id: -1,
+          name,
+          pending: true,
+        });
+      }
+    });
 
-    action(form);
+    startTransition(() => {
+      action(form);
+    });
   };
 
   return (
@@ -78,15 +88,15 @@ export default function CreateProjectForm({
       <FieldError errors={formState.errors?.name} />
 
       <div style={{ marginTop: "20px" }}>
-        <button type="submit" disabled={isPending}>
+        <button type="submit" disabled={isPending || isTransitioning}>
           create project
         </button>
         <BorderBeamButton
           type="submit"
-          isLoading={isPending}
-          disabled={isPending}
+          isLoading={isPending || isTransitioning}
+          disabled={isPending || isTransitioning}
         >
-          Create Project
+          {isPending || isTransitioning ? "Creating..." : "Create Project"}
         </BorderBeamButton>
       </div>
     </form>
