@@ -1,28 +1,17 @@
 "use client";
 
 import styled, { keyframes } from "styled-components";
-import {
-  ArrowRight,
-  Database,
-  Zap,
-  Shield,
-  Cpu,
-  Activity,
-  Check,
-} from "lucide-react";
+import { ArrowRight, Database, Zap, Shield, Cpu, Check } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image"; // Import Image for your assets
 import hypercube from "../../../public/hypercube.png"; // Example image import
-import valut from "../../../public/vault-green.png"; // Example image import
+import vault from "../../../public/vault-green.png"; // Example image import
 import serverExploded from "../../../public/server-exploded.png"; // Example image import
+import cacheImg from "../../../public/cache.png"; // Example image import
+
 import { useEffect, useState } from "react";
 
 // --- ANIMATIONS ---
-const scanline = keyframes`
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
-`;
-
 const blink = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
@@ -32,6 +21,11 @@ const float = keyframes`
   0% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
   100% { transform: translateY(0px); }
+`;
+
+const scanline = keyframes`
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
 `;
 
 // --- STYLES ---
@@ -304,22 +298,6 @@ const CardText = styled.p`
   line-height: 1.6;
 `;
 
-const Scanline = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100%;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgba(88, 166, 255, 0.1),
-    transparent
-  );
-  animation: ${scanline} 3s linear infinite;
-  pointer-events: none;
-`;
-
 // --- NEW STYLES FOR PERFORMANCE ---
 const ComparisonSection = styled.section`
   padding: 100px 24px;
@@ -471,6 +449,49 @@ const FeatureItem = styled.li`
   color: #c9d1d9;
   font-size: 14px;
 `;
+
+const FloatingVisual = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  animation: ${float} 6s ease-in-out infinite;
+  pointer-events: none;
+`;
+
+// FIX: The Scanline Component (overlay for Hero)
+const Scanline = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(88, 166, 255, 0.05) 50%,
+    transparent 51%
+  );
+  background-size: 100% 4px;
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20%;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(88, 166, 255, 0.2),
+      transparent
+    );
+    animation: ${scanline} 3s linear infinite;
+  }
+  pointer-events: none;
+`;
+
 // --- COMPONENT ---
 function Typewriter({ words }: { words: string[] }) {
   const [index, setIndex] = useState(0);
@@ -632,39 +653,57 @@ export default function MarketingPage() {
                 dropped even during deployments.
               </CardText>
             </CardContent>
-            {/* Abstract visual */}
+            {/* FIX: Floating Hypercube */}
             <div
               style={{
                 position: "absolute",
                 right: "-20px",
-                bottom: "-20px",
-                opacity: 0.3,
+                bottom: "-40px",
+                width: "300px",
+                height: "300px",
+                opacity: 0.4,
               }}
             >
-              {/* TODO: Use the new 'hypercube.png' here */}
-              <Image
-                src={hypercube}
-                alt="Engine"
-                width={300}
-                height={300}
-                style={{ objectFit: "contain" }}
-              />
+              <FloatingVisual>
+                <Image
+                  src={hypercube}
+                  alt="Hypertable"
+                  fill
+                  style={{ objectFit: "contain" }}
+                />
+              </FloatingVisual>
             </div>
           </Card>
 
-          {/* Feature 2: Auth */}
-          <Card $highlight="#f1c40f" className="bento-card">
+          {/* Feature 4: WAL */}
+          <Card $colSpan={2} $highlight="#a371f7" className="bento-card">
             <CardContent>
-              <CardIcon $color="#f1c40f">
-                <Shield size={24} />
+              <CardIcon $color="#a371f7">
+                <Database size={24} />
               </CardIcon>
-              <CardTitle>In-Memory Auth</CardTitle>
-              <CardText>
-                We don&apos;t hit the DB for every log. Project keys are cached
-                in RAM with aggressive TTLs, cutting auth latency to
-                nanoseconds.
-              </CardText>
+              <CardTitle>Write-Ahead Log (WAL)</CardTitle>
+              <CardText>Crash-proof durability.</CardText>
             </CardContent>
+            {/* FIX: Floating Vault */}
+            <div
+              style={{
+                position: "absolute",
+                right: "0",
+                top: "0",
+                height: "100%",
+                width: "50%",
+                opacity: 0.15,
+              }}
+            >
+              <FloatingVisual>
+                <Image
+                  src={vault}
+                  alt="WAL"
+                  fill
+                  style={{ objectFit: "contain", objectPosition: "right" }}
+                />
+              </FloatingVisual>
+            </div>
           </Card>
 
           {/* Feature 3: Live Stream */}
@@ -675,8 +714,9 @@ export default function MarketingPage() {
               </CardIcon>
               <CardTitle>WebSockets</CardTitle>
               <CardText>
-                See logs as they happen. Our event loop pipes ingestion directly
-                to connected clients. No polling. No lag.
+                Real-time event loop; See logs as they happen. Our event loop
+                pipes ingestion directly to connected clients. No polling. No
+                lag.
               </CardText>
             </CardContent>
           </Card>
@@ -694,6 +734,7 @@ export default function MarketingPage() {
                 data loss.
               </CardText>
             </CardContent>
+            {/* FIX: Floating Vault */}
             <div
               style={{
                 position: "absolute",
@@ -704,13 +745,14 @@ export default function MarketingPage() {
                 opacity: 0.15,
               }}
             >
-              {/* TODO: Use the new 'vault.png' here */}
-              <Image
-                src={valut}
-                alt="WAL"
-                fill
-                style={{ objectFit: "contain", objectPosition: "right" }}
-              />
+              <FloatingVisual>
+                <Image
+                  src={vault}
+                  alt="WAL"
+                  fill
+                  style={{ objectFit: "contain", objectPosition: "right" }}
+                />
+              </FloatingVisual>
             </div>
           </Card>
         </Grid>
