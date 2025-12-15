@@ -164,10 +164,9 @@ export default function DashboardClient({
       if (isNearBottom) {
         setPage((prev) => prev + 1);
       }
-
-      element.addEventListener("scroll", handleScroll);
-      return () => element.removeEventListener("scroll", handleScroll);
     };
+    element.addEventListener("scroll", handleScroll);
+    return () => element.removeEventListener("scroll", handleScroll);
   }, [hasMore, isSearching]);
 
   // Get raw logs from your hook
