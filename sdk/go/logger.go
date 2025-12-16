@@ -1,6 +1,7 @@
 package logengine
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -128,5 +129,24 @@ func (c *Client) sendBatch(logs []LogEntry)  {
 		fmt.Printf("LogEngine SDK Error: Failed to marshal batch %v\n", err)
 		return
 	}
-	
+
+	req, err := http.NewRequest("POST", c.config.Endpoint, bytes.NewReader(payload))
+	if err != nil {
+		return 
+	}
+
+	req.Header.Set("Content-Type", "application/json") //
+	req.Header.Set("X-Api-Key", c.config.APIKey)
+	req.Header.Set("Authorization", "Bearer "+c.config.APISecret)
+
+	res, err := c.client.Do(req)
+	if err != nil {
+		fmt.Printf("LogEngine SDK Error: Failed to send batch: %v\n", err)
+		return
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode >= 400 {
+		fmt.Printf("LogEngine SDK Error: Server rejected batch (Status %d)\n", res.StatusCode)
+	}
 }
