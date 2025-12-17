@@ -158,6 +158,12 @@ CREATE TABLE IF NOT EXISTS users (
 	  }
 	
 	fmt.Println("Database FTS is ready!")  
+
+	createGinIndexSQL := `CREATE INDEX IS NOT EXISTS idx_logs_data ON logs USING GIN (data);`
+	_, err = db.Exec(ctx, createGinIndexSQL)
+	if err != nil {
+		return fmt.Errorf("failed to create GIN index: %w", err)
+	}
 	
 	fmt.Println("Database schema is ready!")
 	return nil
@@ -171,7 +177,6 @@ func InsertLog(ctx context.Context, db *pgxpool.Pool, log LogEntry) error {
 		logTime = time.Now()
 	}
 
-	fmt.Printf("The log to insert ------------ : %v \n", log)
 
 	insertSQL := `
 		INSERT INTO logs (timestamp, level, message, service, project_id) 
@@ -208,7 +213,7 @@ func GetLogs(ctx context.Context, db *pgxpool.Pool,  projectID ,limit, offset in
 	argsCounter := 1
 
 	var queryBuilder strings.Builder
-	queryBuilder.WriteString(fmt.Sprintf(`SELECT timestamp, level, message, service 
+	queryBuilder.WriteString(fmt.Sprintf(`SELECT timestamp, level, message, service, data
 		FROM logs WHERE project_id = $%d`, argsCounter))
 	args = append(args, projectID)
 	argsCounter++
