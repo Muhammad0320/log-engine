@@ -11,17 +11,22 @@ import (
 	"time"
 )
 
+const (
+	batchSize = 250
+
+	maxQueue = 4096
+	
+	workerCount = 3
+)
+
 type Config struct {
 	APIKey    string
 	APISecret string
-	Endpoint  string
+	Endpoint  string // For self hosted users
 
 	// The Tuning knobs
-	BatchSize int
-	FlushTime  time.Duration
-	MaxQueue int 
-	Workers int 
 	RetryCount int 
+	FlushTime  time.Duration
 }
 
 // For lazy devs (me included) 
@@ -30,10 +35,7 @@ func DefaultConfig(key, secret string) Config {
 		APIKey: key,
 		APISecret: secret,
 		Endpoint: "http://localhost:8080/api/v1/logs",
-		BatchSize: 100,
 		FlushTime: 1 * time.Second,
-		MaxQueue: 4096,
-		Workers: 3,
 		RetryCount: 3,
 	}
 }
@@ -71,29 +73,20 @@ func NewClient(cfg Config) *Client {
 		cfg.Endpoint = "http://localhost:8080/api/v1/logs"
 	}
 
-	if cfg.BatchSize == 0 {
-		cfg.BatchSize = 100
-	}
-
-	if cfg.MaxQueue == 0 {
-		cfg.MaxQueue = 1024
-	}
-
-	if cfg.FlushTime == 0 {
+	if cfg.FlushTime == 0 || cfg.FlushTime < 500*time.Millisecond {
 		cfg.FlushTime = 1 * time.Second
 	}
-
 	
 
 	c := &Client{
 		config: cfg,
-		queue: make(chan LogEntry, cfg.MaxQueue),
+		queue: make(chan LogEntry, maxQueue),
 		client: &http.Client{Timeout: 5 * time.Second},
 		shutdown: make(chan struct{}),
 		service: "default", // can be overridden perlog or global
 	}
 
-	for i := range cfg.Workers {
+	for i := range workerCount {
 		c.wg.Add(1)
 		go c.worker(i)  
 	}
@@ -209,7 +202,7 @@ func (c *Client) sendWithRetry(logs []LogEntry)  {
 func (c *Client) worker(_ int) {
 	defer c.wg.Done()
 
-	buffer := make([]LogEntry, 0, c.config.BatchSize)
+	buffer := make([]LogEntry, 0, batchSize)
 	ticker := time.NewTicker(c.config.FlushTime)
 	defer ticker.Stop()
 
@@ -232,7 +225,7 @@ func (c *Client) worker(_ int) {
 				return 
 			}
 			buffer = append(buffer, entry)
-			if len(buffer) >= c.config.BatchSize {
+			if len(buffer) >= batchSize {
 				flush()
 			}
 		case <- ticker.C: 

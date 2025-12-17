@@ -20,6 +20,7 @@ type LogEntry struct {
 	Message string `json:"message"`
 	Service string `json:"service"`
 	ProjectID int `json:"-"`
+	Data map[string]interface{} `json:"data,omitempty"`
 }
 
 
@@ -102,6 +103,7 @@ CREATE TABLE IF NOT EXISTS users (
 		level       VARCHAR(50)       NOT NULL,
 		message     TEXT,
 		service     VARCHAR(100),
+		data 		JSONB		DEFAULT '{}'::jsonb,
 		search_vector TSVECTOR
 	);`
 
