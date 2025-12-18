@@ -405,7 +405,7 @@ func (s *Server) handleCreateProject(c *gin.Context) {
 	randSecret, _ := utils.GenerateRandomString(16)
 	apiSecret := "sk_live_" + randSecret
 
-	secretHash, err := auth.HashPasswod(apiSecret)
+	secretHash, err := utils.HashPasswod(apiSecret)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "failed to secure peoject keys"})
 		return
