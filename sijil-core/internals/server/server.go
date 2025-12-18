@@ -157,13 +157,20 @@ func (s *Server) handleForgotPassword(c *gin.Context) {
 func (s *Server) handleResetPassword(c *gin.Context) {
 
 	var req struct {
-		Token string `json:"token" binding:"required"`
+		Token      string `json:"token" binding:"required"`
 		NewPassord string `json:"password" binding:"required,min=8"`
 	}
 
 	hashToken := utils.Hashtoken(req.Token)
-	hashPassword := 
+	hashPassword, _ := utils.HashPasswod(req.NewPassord)
 
+	success, err := database.ResetPasswordByToken(c.Request.Context(), s.db, hashToken, hashPassword)
+	if err != nil || !success {
+		c.JSON(400, gin.H{"error": "invalid token or token expired"})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "password reset successfully"})
 }
 
 func (s *Server) handleLogIngest(c *gin.Context) {
@@ -359,7 +366,7 @@ func (s *Server) handleUserLogin(c *gin.Context) {
 		return
 	}
 
-	if err := auth.ComparePasswordHash(req.Password, user.PasswordHash); !err {
+	if err := utils.ComparePasswordHash(req.Password, user.PasswordHash); !err {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 		return
 	}
