@@ -57,7 +57,65 @@ export class Logengine {
     this.push("error", message, data);
   }
 
-  private push(level: string, message: string, data?: Object) {}
+  private push(level: LogEntry["level"], message: string, data?: Object) {
+    // Safety Cap
+    if (this.queue.length >= 5000) {
+      console.warn("LogEngine Queue Full. Dropping logs");
+      return;
+    }
 
-  private flush() {}
+    this.queue.push({
+      level,
+      message,
+      data: data || {},
+      timestamp: new Date().toISOString(),
+    });
+
+    if (this.queue.length >= this.config.batchSize) {
+      this.flush();
+    }
+  }
+
+  private async flush() {
+    if (this.queue.length === 0) return;
+    if (this.activeRequests >= this.MAX_CURRENT_REQUEST) return;
+
+    const batch = this.queue.splice(0, this.config.batchSize);
+    this.activeRequests++;
+
+    try {
+      await this.sendWithRetry(batch);
+    } catch (error) {
+      console.error("LogEngine Delivery failed:", error);
+    } finally {
+      this.activeRequests--;
+    }
+  }
+
+  private async sendWithRetry(batch: LogEntry[], attempt = 0): Promise<void> {
+    try {
+      const res = await fetch(this.config.endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": this.config.apiKey,
+          Authorization: `Bearer ${this.config.apiSecret}`,
+        },
+        body: JSON.stringify(batch),
+      });
+
+      if (!res.ok) {
+        if (res.status >= 500) throw new Error(`Server Error ${res.status}`);
+        if (res.status >= 400)
+          console.error(`LogEngine Rejected: ${res.status}`);
+      }
+    } catch (error) {
+      if (attempt < this.config.maxRetries) {
+        // Exponential Backoff
+        await new Promise((r) => setTimeout(r, 100 * Math.pow(2, attempt)));
+        return this.sendWithRetry(batch, attempt + 1);
+      }
+      throw error;
+    }
+  }
 }
