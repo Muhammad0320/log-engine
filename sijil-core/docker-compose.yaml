@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: log_db
     ports:
-      - "5433:5432"
+      - "5434:5432"
     command: postgres -c shared_preload_libraries=timescaledb
     volumes:
       - postgres_data:/var/lib/postgresql/data

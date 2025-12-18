@@ -173,7 +173,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 	fmt.Println("Database FTS is ready!")
 
-	createGinIndexSQL := `CREATE INDEX IS NOT EXISTS idx_logs_data ON logs USING GIN (data);`
+	createGinIndexSQL := `CREATE INDEX IF NOT EXISTS idx_logs_data ON logs USING GIN (data);`
 	_, err = db.Exec(ctx, createGinIndexSQL)
 	if err != nil {
 		return fmt.Errorf("failed to create GIN index: %w", err)
