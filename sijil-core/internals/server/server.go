@@ -76,16 +76,15 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 
 	apiv1 := router.Group("/api/v1")
 
-	authLimiter := NewIPRateLimiter(rate.Limit(1.0/60.0), 5)
 	authGroup := apiv1.Group("/auth")
 	{
 		authGroup.POST("/register", s.handleUserRegister)
 		authGroup.POST("/login", s.handleUserLogin)
 
 		// Sensitive routes
-		authGroup.GET("/verify", s.rateLimitMiddleware(authLimiter), s.handleVerifyEmail)
-		authGroup.POST("/forgot-password", s.rateLimitMiddleware(authLimiter), s.handleForgotPassword)
-		authGroup.POST("/reset-password", s.rateLimitMiddleware(authLimiter), s.handleResetPassword)
+		authGroup.GET("/verify", s.rateLimitMiddleware(rate.Limit(1.0/60.0), 5), s.handleVerifyEmail)
+		authGroup.POST("/forgot-password", s.rateLimitMiddleware(rate.Limit(1.0/60.0), 5), s.handleForgotPassword)
+		authGroup.POST("/reset-password", s.rateLimitMiddleware(rate.Limit(1.0/60.0), 5), s.handleResetPassword)
 	}
 
 	// For our Control Room

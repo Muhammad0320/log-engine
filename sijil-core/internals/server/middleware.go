@@ -11,7 +11,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func (s *Server) RateLimitMiddleware(r rate.Limit, b int) gin.HandlerFunc {
+func (s *Server) rateLimitMiddleware(r rate.Limit, b int) gin.HandlerFunc {
 	// We store the limiters in a map, keyed by IP
 	var limiters = make(map[string]*rate.Limiter)
 	var mu sync.RWMutex
