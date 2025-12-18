@@ -32,9 +32,10 @@ func ConnectDB(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("failed to parse connection string: %w", err)
 	}
 
-	config.MaxConns = 60
+	config.MaxConns = 100
 	config.MinConns = 10
-	config.MaxConnIdleTime = 30 * time.Minute
+	config.MaxConnIdleTime = 15 * time.Minute
+	config.HealthCheckPeriod = 1 * time.Minute
 
 	db, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
