@@ -7,9 +7,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/time/rate"
 )
 
-// Conteol Room Guard
+
+type IPRateLimiter struct {
+
+	ips map[string]*rate.Limiter
+	
+
+}
+
+// Control Room Guard
 func (s *Server) authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := ""
@@ -114,3 +123,4 @@ func (s *Server) SecurityHeadersMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 } 
+
