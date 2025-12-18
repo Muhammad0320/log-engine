@@ -20,7 +20,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-
 func main() {
 
 	if err := godotenv.Load(); err != nil {
@@ -30,13 +29,13 @@ func main() {
 	// 1. Set up the "root" context
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	
+
 	// 2. Connect to the database
-    dbPassword := os.Getenv("DB_PASSWORD")
+	dbPassword := os.Getenv("DB_PASSWORD")
 	if dbPassword == "" {
-        log.Fatal("FATAL: DB_PASSWORD environment variable is not set ")
+		log.Fatal("FATAL: DB_PASSWORD environment variable is not set ")
 	}
-	
+
 	connString := fmt.Sprintf("postgres://postgres:%s@localhost:5433/log_db?sslmode=disable", dbPassword)
 
 	db, err := database.ConnectDB(ctx, connString)
@@ -53,9 +52,9 @@ func main() {
 	}
 
 	// -- Retention policy
-	go database.RunRetentionPolicy(ctx, db)  
-   
-	// -- WebSocket -- 
+	go database.RunRetentionPolicy(ctx, db)
+
+	// -- WebSocket --
 	h := hub.NewHub()
 	go h.Run()
 	fmt.Println("Websocket has started! -------")
@@ -71,7 +70,7 @@ func main() {
 	}
 	defer wal.Close()
 
-	// --- Recovery Logic 
+	// --- Recovery Logic
 	fmt.Println("Checking was for unsaved logs")
 	recoveredLogs, err := wal.Recover()
 	if err != nil {
@@ -86,32 +85,32 @@ func main() {
 
 		rows := make([][]any, len(recoveredLogs))
 		for i, log := range recoveredLogs {
-		rows[i] = []any{
-			log.Timestamp,
-			log.Level,
-			log.Message,
-			log.Service,
-			log.ProjectID,
+			rows[i] = []any{
+				log.Timestamp,
+				log.Level,
+				log.Message,
+				log.Service,
+				log.ProjectID,
+			}
 		}
-	}
 
-	_, err := db.CopyFrom(
-		recoverCtx, 
-		pgx.Identifier{"logs"},
-		[]string{"timestamp", "level", "message", "service", "project_id"},
-		pgx.CopyFromRows(rows),
-	)
-	if err != nil {
-		log.Fatalf("⚠️ Failed to save recovered logs: %v", err)
-	}
+		_, err := db.CopyFrom(
+			recoverCtx,
+			pgx.Identifier{"logs"},
+			[]string{"timestamp", "level", "message", "service", "project_id"},
+			pgx.CopyFromRows(rows),
+		)
+		if err != nil {
+			log.Fatalf("⚠️ Failed to save recovered logs: %v", err)
+		}
 
-	fmt.Println("Recover successful. clearing WAL.")
-	
-	if err := wal.Clear(); err != nil {
-		log.Fatalf("Fatal: Failed to clear WAL: %v", err)
-	}
+		fmt.Println("Recover successful. clearing WAL.")
 
-	fmt.Println("✅ Recover complete. Wal Cleared")
+		if err := wal.Clear(); err != nil {
+			log.Fatalf("Fatal: Failed to clear WAL: %v", err)
+		}
+
+		fmt.Println("✅ Recover complete. Wal Cleared")
 	} else {
 		wal.Clear()
 		fmt.Println("✅ Wal is empty. Clean startup.")
@@ -122,7 +121,7 @@ func main() {
 	// -- Ingesting engine
 	engine := ingest.NewIngestionEngine(db, wal, h)
 	engine.Start(ctx)
-	
+
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		log.Fatal("FATAL: JWT_SECRET environment variable is not set")
@@ -130,11 +129,11 @@ func main() {
 	srv := server.NewServer(db, engine, h, authCache, jwtSecret)
 
 	httpServer := &http.Server{
-		Addr: ":8080",
-		Handler: srv.Router,
-		ReadTimeout: 10 * time.Second,
+		Addr:         ":8080",
+		Handler:      srv.Router,
+		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
-		IdleTimeout: 120 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	go func() {
@@ -142,12 +141,12 @@ func main() {
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server crashed: %v", err)
 		}
-	}();
+	}()
 
 	// Graceful shutdown Block: listens for Ctlr + C
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<- quit 
+	<-quit
 	fmt.Println("\n Shutting down...")
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -162,4 +161,3 @@ func main() {
 
 	fmt.Println("Cleanup complete. Bye!")
 }
-

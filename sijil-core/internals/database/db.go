@@ -15,14 +15,13 @@ var EmailExists = errors.New("email already exists")
 var NameExists = errors.New("project name already exists")
 
 type LogEntry struct {
-	Timestamp time.Time `json:"timestamp"`
-	Level   string `json:"level"`
-	Message string `json:"message"`
-	Service string `json:"service"`
-	ProjectID int `json:"-"`
-	Data map[string]interface{} `json:"data,omitempty"`
+	Timestamp time.Time              `json:"timestamp"`
+	Level     string                 `json:"level"`
+	Message   string                 `json:"message"`
+	Service   string                 `json:"service"`
+	ProjectID int                    `json:"-"`
+	Data      map[string]interface{} `json:"data,omitempty"`
 }
-
 
 // ConnectDB tries to connect to the database and returns the connection.
 func ConnectDB(ctx context.Context, connString string) (*pgxpool.Pool, error) {
@@ -42,7 +41,6 @@ func CreateSchema(ctx context.Context, db *pgxpool.Pool) error {
 	if err != nil {
 		return fmt.Errorf("failed to enable timescaledb extension: %w", err)
 	}
-
 
 	// Create user tables
 	createUserTableSQL := `
@@ -64,7 +62,7 @@ CREATE TABLE IF NOT EXISTS users (
 `
 	_, err = db.Exec(ctx, createUserTableSQL)
 	if err != nil {
-		return  fmt.Errorf("failed to create 'users' table :%w ", err)
+		return fmt.Errorf("failed to create 'users' table :%w ", err)
 	}
 
 	createProjectTableSQL := `
@@ -124,11 +122,11 @@ CREATE TABLE IF NOT EXISTS users (
 	chunk_time_interval => INTERVAL '1 day', 
 	if_not_exists => TRUE);`
 	_, err = db.Exec(ctx, createHypertableSQL)
-		if err != nil {
+	if err != nil {
 		return fmt.Errorf("failed to create hypertable: %w", err)
-	  }
+	}
 
-	  createFunctionSQL := `
+	createFunctionSQL := `
 	  			CREATE OR REPLACE FUNCTION update_log_search_vector()
 				RETURNS TRIGGER AS $$
 				BEGIN
@@ -144,12 +142,12 @@ CREATE TABLE IF NOT EXISTS users (
 	  			END;
 				$$ LANGUAGE plpgsql
 	  `
-	  _, err = db.Exec(ctx, createFunctionSQL);
-	  if err != nil {
-		return  fmt.Errorf("failed to create trigger function: %w", err)
-	  }
+	_, err = db.Exec(ctx, createFunctionSQL)
+	if err != nil {
+		return fmt.Errorf("failed to create trigger function: %w", err)
+	}
 
-	  createTriggerSQL := `
+	createTriggerSQL := `
 	  		DROP TRIGGER IF EXISTS ts_vector_update ON logs; 
 			CREATE TRIGGER ts_vector_update
 			BEFORE INSERT ON logs
@@ -157,19 +155,19 @@ CREATE TABLE IF NOT EXISTS users (
 	  		EXECUTE FUNCTION update_log_search_vector();
 	  `
 
-	  _, err = db.Exec(ctx, createTriggerSQL)
-	  if err != nil {
+	_, err = db.Exec(ctx, createTriggerSQL)
+	if err != nil {
 		return fmt.Errorf("failed to create trigger : %w", err)
-	  }
-	
-	fmt.Println("Database FTS is ready!")  
+	}
+
+	fmt.Println("Database FTS is ready!")
 
 	createGinIndexSQL := `CREATE INDEX IS NOT EXISTS idx_logs_data ON logs USING GIN (data);`
 	_, err = db.Exec(ctx, createGinIndexSQL)
 	if err != nil {
 		return fmt.Errorf("failed to create GIN index: %w", err)
 	}
-	
+
 	fmt.Println("Database schema is ready!")
 	return nil
 }
@@ -181,7 +179,6 @@ func InsertLog(ctx context.Context, db *pgxpool.Pool, log LogEntry) error {
 	if logTime.IsZero() {
 		logTime = time.Now()
 	}
-
 
 	insertSQL := `
 		INSERT INTO logs (timestamp, level, message, service, project_id, data) 
@@ -195,15 +192,15 @@ func InsertLog(ctx context.Context, db *pgxpool.Pool, log LogEntry) error {
 		log.ProjectID,
 		log.Data,
 	)
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to insert log: %w", err)
 	}
-	
+
 	return nil
 }
 
-func GetLogs(ctx context.Context, db *pgxpool.Pool,  projectID ,limit, offset int, searchQuery string, retentionDays int) ([]LogEntry, error) { 
+func GetLogs(ctx context.Context, db *pgxpool.Pool, projectID, limit, offset int, searchQuery string, retentionDays int) ([]LogEntry, error) {
 
 	// 1. Safety: clamp limit
 	const MaxLimit = 1000
@@ -212,7 +209,7 @@ func GetLogs(ctx context.Context, db *pgxpool.Pool,  projectID ,limit, offset in
 	}
 
 	// 2.Enforce a db timeout
-	ctx, cancel := context.WithTimeout(ctx, 3 *time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	args := make([]any, 0)
@@ -232,7 +229,7 @@ func GetLogs(ctx context.Context, db *pgxpool.Pool,  projectID ,limit, offset in
 		argsCounter++
 	}
 	queryBuilder.WriteString(fmt.Sprintf(" AND timestamp > NOW() - INTERVAL '%d days'", retentionDays))
-    
+
 	queryBuilder.WriteString(fmt.Sprintf(" ORDER BY timestamp DESC LIMIT $%d OFFSET $%d", argsCounter, argsCounter+1))
 	args = append(args, limit, offset)
 
@@ -241,10 +238,10 @@ func GetLogs(ctx context.Context, db *pgxpool.Pool,  projectID ,limit, offset in
 
 	rows, err := db.Query(ctx, getSQL, args...)
 	if err != nil {
-	return nil,	fmt.Errorf("failed to get logs: %w", err)
+		return nil, fmt.Errorf("failed to get logs: %w", err)
 	}
-	defer rows.Close();
- 
+	defer rows.Close()
+
 	var logs []LogEntry
 	for rows.Next() {
 		var log LogEntry
@@ -254,19 +251,19 @@ func GetLogs(ctx context.Context, db *pgxpool.Pool,  projectID ,limit, offset in
 		}
 		logs = append(logs, log)
 	}
-	
+
 	return logs, nil
 }
 
 type User struct {
-	ID int
+	ID           int
 	PasswordHash string
 }
 
 func CreateUser(ctx context.Context, db *pgxpool.Pool, firstname, lastname, email, hashpassword string) (int, error) {
 
-	var newUserID int 
-	err := db.QueryRow(ctx, 
+	var newUserID int
+	err := db.QueryRow(ctx,
 		`INSERT INTO users (firstname, lastname, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id`,
 		firstname, lastname, email, hashpassword,
 	).Scan(&newUserID)
@@ -281,30 +278,30 @@ func CreateUser(ctx context.Context, db *pgxpool.Pool, firstname, lastname, emai
 		return 0, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return newUserID, nil 
+	return newUserID, nil
 }
 
 func GetUserByEmail(ctx context.Context, db *pgxpool.Pool, email string) (User, error) {
 
 	var user User
-	err := db.QueryRow(ctx, 
-	`SELECT id, password_hash FROM users WHERE email = $1`,
-	email).Scan(&user.ID, &user.PasswordHash)
+	err := db.QueryRow(ctx,
+		`SELECT id, password_hash FROM users WHERE email = $1`,
+		email).Scan(&user.ID, &user.PasswordHash)
 	if err != nil {
 		return user, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	return  user, nil 
+	return user, nil
 }
 
-type UserF struct{
-		ID int 
-		FirstName string
-		LastName string 
-		Email string
-		AvatarUrl string 
-		Plan string
-	}
+type UserF struct {
+	ID        int
+	FirstName string
+	LastName  string
+	Email     string
+	AvatarUrl string
+	Plan      string
+}
 
 func GetUserByID(ctx context.Context, db *pgxpool.Pool, userID int) (UserF, error) {
 	var user UserF
@@ -316,17 +313,17 @@ func GetUserByID(ctx context.Context, db *pgxpool.Pool, userID int) (UserF, erro
 		return user, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	return user, nil 
+	return user, nil
 }
 
 type Project struct {
-	ID int 
-	UserID int 
-	ApiSecretHash string 
+	ID            int
+	UserID        int
+	ApiSecretHash string
 }
 
 func GetProductByApiKey(ctx context.Context, db *pgxpool.Pool, apiKey string) (Project, error) {
-	var project Project	
+	var project Project
 	err := db.QueryRow(ctx, `
 	SELECT id, user_id, api_secret_hash FROM projects WHERE api_key = $1
 	`, apiKey).Scan(&project.ID, &project.UserID, &project.ApiSecretHash)
@@ -334,20 +331,20 @@ func GetProductByApiKey(ctx context.Context, db *pgxpool.Pool, apiKey string) (P
 		return project, fmt.Errorf("failed to gett project: %w", err)
 	}
 
-	return  project, nil 
+	return project, nil
 }
 
 func CheckProjectIDOwners(ctx context.Context, db *pgxpool.Pool, userID, projectID int) (bool, error) {
-	var exists bool 
+	var exists bool
 	err := db.QueryRow(ctx, `
 	SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1 AND user_id = $2)
-	`, projectID, userID).Scan(&exists) 
+	`, projectID, userID).Scan(&exists)
 
-	return  exists, err
+	return exists, err
 }
 
 func CreateProject(ctx context.Context, db *pgxpool.Pool, userID int, name, apiKey, apiSecretHash string) (int, error) {
-	var projectID int 
+	var projectID int
 
 	err := db.QueryRow(ctx, `
 	INSERT INTO projects (user_id, name, api_key, api_secret_hash) VALUES ($1, $2, $3, $4) RETURNING id
@@ -363,13 +360,13 @@ func CreateProject(ctx context.Context, db *pgxpool.Pool, userID int, name, apiK
 		return 0, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return projectID, nil 	
+	return projectID, nil
 }
 
-func GetUserProjects(ctx context.Context, db *pgxpool.Pool, userID int) ( []struct{
-	ID int 		`json:"id"`
+func GetUserProjects(ctx context.Context, db *pgxpool.Pool, userID int) ([]struct {
+	ID   int    `json:"id"`
 	Name string `json:"name"`
-} , error) {
+}, error) {
 
 	rows, err := db.Query(ctx, `SELECT id, name FROM projects WHERE user_id=$1`, userID)
 	if err != nil {
@@ -377,42 +374,42 @@ func GetUserProjects(ctx context.Context, db *pgxpool.Pool, userID int) ( []stru
 	}
 	defer rows.Close()
 
-	var projects []struct{
-	ID int 		`json:"id"`
-	Name string `json:"name"`
+	var projects []struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
 	}
 
 	for rows.Next() {
 
-		var p struct{
-	ID int 		`json:"id"`
-	Name string `json:"name"`
-	}
-	
-	if err := rows.Scan(&p.ID, p.Name); err != nil {
-		return nil, err
+		var p struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		}
+
+		if err := rows.Scan(&p.ID, p.Name); err != nil {
+			return nil, err
+		}
+
+		projects = append(projects, p)
 	}
 
-	projects = append(projects, p)
-	}
-
-	return  projects, nil 
+	return projects, nil
 }
 
-type LogStat struct { 
+type LogStat struct {
 	Bucket time.Time `json:"time"`
-	Count int `json:"count"`
+	Count  int       `json:"count"`
 }
 
 func GetLogStats(ctx context.Context, db *pgxpool.Pool, projectID int, fromTime, toTime time.Time, bucket string) ([]LogStat, error) {
 
-	validBuckets := map[string]bool {
+	validBuckets := map[string]bool{
 		"1 minutes": true, "5 minutes": true, "15 minutes": true, "30 minutes": true,
 		"1 hour": true, "6 hours": true, "12 hours": true, "1 day": true,
 	}
 
 	if !validBuckets[bucket] {
-		return  nil, fmt.Errorf("Invalid bucket interval: %s\n", bucket)
+		return nil, fmt.Errorf("Invalid bucket interval: %s\n", bucket)
 	}
 
 	query := fmt.Sprintf(`
@@ -441,19 +438,19 @@ func GetLogStats(ctx context.Context, db *pgxpool.Pool, projectID int, fromTime,
 		stats = append(stats, s)
 	}
 
-	return  stats, nil 
-} 
+	return stats, nil
+}
 
 type LogSummary struct {
-	TotalLogs int `json:"total_logs"`
-	ErrorCount int `json:"error_count"`
-	ServiceCount int `json:"service_count"`
-	ErrorRate float64 `json:"error_rate"`
+	TotalLogs    int     `json:"total_logs"`
+	ErrorCount   int     `json:"error_count"`
+	ServiceCount int     `json:"service_count"`
+	ErrorRate    float64 `json:"error_rate"`
 }
 
 func GetlogSummary(ctx context.Context, db *pgxpool.Pool, projectID int, fromTime, toTime time.Time) (LogSummary, error) {
 	var summary LogSummary
-	
+
 	query := `
 		WITH subset AS (
 		SELECT level, service
@@ -474,16 +471,16 @@ func GetlogSummary(ctx context.Context, db *pgxpool.Pool, projectID int, fromTim
 	)
 
 	if err != nil {
-		return  summary, err
+		return summary, err
 	}
 
 	if summary.TotalLogs > 0 {
-		summary.ErrorRate = ( float64(summary.ErrorCount) / float64(summary.TotalLogs)) * 100
+		summary.ErrorRate = (float64(summary.ErrorCount) / float64(summary.TotalLogs)) * 100
 	} else {
 		summary.ErrorRate = 0
 	}
 
-	return summary, nil 
+	return summary, nil
 }
 
 func RunRetentionPolicy(ctx context.Context, db *pgxpool.Pool) {
@@ -492,28 +489,27 @@ func RunRetentionPolicy(ctx context.Context, db *pgxpool.Pool) {
 
 	for {
 		select {
-		case <- ticker.C: 
+		case <-ticker.C:
 			_, err := db.Exec(ctx, "SELECT drop_chunks('logs', INTERVAL '30 days');")
 			if err != nil {
 				fmt.Printf("⚠️ Global Retention Policy failed: %v\n", err)
 			} else {
 				fmt.Println("🧹 Global Retention policy Ran: Cleared logs > 30 days old.")
 			}
-		case <- ctx.Done(): 
+		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-
 func GetUserPlan(ctx context.Context, db *pgxpool.Pool, userID int) (string, error) {
 	var plan string
 	err := db.QueryRow(ctx, "SELECT plan FROM users WHERE id = $1", userID).Scan(&plan)
-	return  plan, err
+	return plan, err
 }
 
 func CheckProjectAccess(ctx context.Context, db *pgxpool.Pool, userID, projectID int) (bool, error) {
-	var exists bool 
+	var exists bool
 
 	query := `
 		SELECT EXISTS (
@@ -524,15 +520,14 @@ func CheckProjectAccess(ctx context.Context, db *pgxpool.Pool, userID, projectID
 	`
 	err := db.QueryRow(ctx, query, projectID, userID).Scan(&exists)
 
-	return  exists, err
+	return exists, err
 }
-
 
 func AddProjectMember(ctx context.Context, db *pgxpool.Pool, projectID int, email, role string) error {
 
 	user, err := GetUserByEmail(ctx, db, email)
 	if err != nil {
-		return  fmt.Errorf("User not found")
+		return fmt.Errorf("User not found")
 	}
 
 	commandTag, err := db.Exec(ctx, `INSERT INTO project_members (project_id, user_id, role) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`, projectID, user.ID, role)
@@ -545,11 +540,11 @@ func AddProjectMember(ctx context.Context, db *pgxpool.Pool, projectID int, emai
 		return fmt.Errorf("user is already a member")
 	}
 
-	return  err
+	return err
 }
 
 func GetProjectRole(ctx context.Context, db *pgxpool.Pool, userID, projectID int) (string, error) {
-    // 1. Check if Owner
+	// 1. Check if Owner
 	var isOwner bool
 	err := db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1 AND user_id = $2)", projectID, userID).Scan(&isOwner)
 
@@ -562,13 +557,13 @@ func GetProjectRole(ctx context.Context, db *pgxpool.Pool, userID, projectID int
 		return "owner", nil
 	}
 
-    // 2. Check if Member
-    var role string
-    err = db.QueryRow(ctx, "SELECT role FROM project_members WHERE user_id = $1 AND project_id = $2", userID, projectID).Scan(&role)
-    if err != nil {
-        return "", err // Not found in either
-    }
-    return role, nil
+	// 2. Check if Member
+	var role string
+	err = db.QueryRow(ctx, "SELECT role FROM project_members WHERE user_id = $1 AND project_id = $2", userID, projectID).Scan(&role)
+	if err != nil {
+		return "", err // Not found in either
+	}
+	return role, nil
 }
 
 func GetMemberCountByProjectID(ctx context.Context, db *pgxpool.Pool, projectID int) (int, error) {
@@ -577,31 +572,31 @@ func GetMemberCountByProjectID(ctx context.Context, db *pgxpool.Pool, projectID 
 	if err != nil {
 		return 0, fmt.Errorf("failed to get memebers count: %w", err)
 	}
-	
+
 	return count, err
 }
 
 func GetProjectCountByUserID(ctx context.Context, db *pgxpool.Pool, userID int) (int, error) {
-	var count int 
+	var count int
 	err := db.QueryRow(ctx, `SELECT COUNT(*) FROM projects WHERE user_id = $1`, userID).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get projects count: %s", err)
-	} 
+	}
 
-	return count, nil 
+	return count, nil
 }
 
 type ProjectMember struct {
-	UserID int `json:"user_id"`
-	ProjectID int `json:"project_id"`
-	Role string `json:"role"`
-	JoinedAt time.Time `json:"joined_at"`
+	UserID    int       `json:"user_id"`
+	ProjectID int       `json:"project_id"`
+	Role      string    `json:"role"`
+	JoinedAt  time.Time `json:"joined_at"`
 	// Avatar might be needed in the future
 }
 
 func GetProjectMembers(ctx context.Context, db *pgxpool.Pool, projectID int) ([]ProjectMember, error) {
 	var members []ProjectMember
-	
+
 	queryUnion := `
         SELECT u.id, u.email, 'owner' as role, p.created_at as joined_at
         FROM projects p
@@ -634,9 +629,9 @@ func GetProjectMembers(ctx context.Context, db *pgxpool.Pool, projectID int) ([]
 func SetVerificationToken(ctx context.Context, db *pgxpool.Pool, userID int, tokenHash string) error {
 	_, err := db.Exec(ctx, "UPDATE users SET verification_token = $1 WHERE id = $2", tokenHash, userID)
 	return err
-} 
+}
 
-func VerifyUserAccount(ctx context.Context, db *pgxpool.Pool, tokenHash string ) (bool, error) {
+func VerifyUserAccount(ctx context.Context, db *pgxpool.Pool, tokenHash string) (bool, error) {
 
 	res, err := db.Exec(ctx, `
 	UPDATE users 
@@ -644,12 +639,11 @@ func VerifyUserAccount(ctx context.Context, db *pgxpool.Pool, tokenHash string )
     WHERE verification_token = $1`, tokenHash)
 
 	if err != nil {
-		return false, err 
+		return false, err
 	}
 
-	return res.RowsAffected() > 0, nil 
+	return res.RowsAffected() > 0, nil
 }
-
 
 func SetPasswordResetToken(ctx context.Context, db *pgxpool.Pool, tokenHash string, expiry time.Time, email string) error {
 
@@ -662,14 +656,13 @@ func SetPasswordResetToken(ctx context.Context, db *pgxpool.Pool, tokenHash stri
 	return err
 }
 
-
 func ResetPasswordByToken(ctx context.Context, db *pgxpool.Pool, tokenHash string, newPasswordHash string) (bool, error) {
 	res, err := db.Exec(ctx, `
 	UPDATE users
 	SET password_hash = $1, password_token_reset = NULL, passworrd_reset_expired
 	WHERE password_token_reset = $2 AND password_reset_expired > NOW()
 	`, newPasswordHash, tokenHash)
-	
+
 	if err != nil {
 		return false, err
 	}
