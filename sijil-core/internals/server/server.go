@@ -121,10 +121,37 @@ func (s *Server) handleVerifyEmail(c *gin.Context) {
 		return
 	}
 
-	tokenHash, err := ut
+	tokenHash := utils.Hashtoken(token)
 
-	success, err := database.VerifyUserAccount(c.Request.Context(), s.db)
+	success, err := database.VerifyUserAccount(c.Request.Context(), s.db, tokenHash)
+	if err != nil || !success {
+		c.JSON(400, gin.H{"error": "Invalid token or token expired"})
+		return
+	}
 
+	c.JSON(200, gin.H{"message": "email verified successfully"})
+}
+
+func (s *Server) handleForgotPassword(c *gin.Context) {
+
+	var req struct {
+		Email string `json:"email" binding:"required,email"`
+	}
+	if err := c.BindJSON(&req); err != nil {
+		return
+	}
+
+	// Token management
+	token, _ := utils.GenerateRandomString(32)
+	hashToken := utils.Hashtoken(token)
+
+	// Set in DB
+	expires := time.Now().Add(15 * time.Minute)
+	_ = database.SetPasswordResetToken(c.Request.Context(), s.db, hashToken, expires, req.Email)
+
+	fmt.Printf("DEBUG: Send reset link to %s :/reset-password?:token=%s\n", req.Email, token)
+
+	c.JSON(200, gin.H{"message": "If an account exists, a reset link has been sent"})
 }
 
 func (s *Server) handleLogIngest(c *gin.Context) {
