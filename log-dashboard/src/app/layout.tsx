@@ -19,7 +19,7 @@ const firaCode = Fira_Code({
 });
 
 export const metadata: Metadata = {
-  title: "LogEngine",
+  title: "Sijil",
   description: "High-throughput log ingestion",
 };
 

@@ -564,7 +564,7 @@ export default function MarketingPage() {
       <HeroSection>
         <HeroGlow />
         <Pill>
-          <Zap size={14} fill="currentColor" /> LogEngine v1.0 Production Ready
+          <Zap size={14} fill="currentColor" /> Sijil v1.0 Production Ready
         </Pill>
 
         <HeroTitle>
@@ -588,7 +588,7 @@ export default function MarketingPage() {
           <PrimaryButton href="/register">
             Start Ingesting <ArrowRight size={18} />
           </PrimaryButton>
-          <SecondaryButton href="https://github.com/muhammad0320/log-engine">
+          <SecondaryButton href="https://github.com/muhammad0320/sijil-core">
             View Source
           </SecondaryButton>
         </ButtonGroup>

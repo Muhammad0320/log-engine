@@ -4,9 +4,8 @@
 
 # Go build artifacts
 # Ignore the compiled executables for our 'api' and 'client'
-api.exe
-api
-client.exe
-client
-stresss.exe
-stresss
+# Binaries
+*.exe
+# api
+# client
+# stresss

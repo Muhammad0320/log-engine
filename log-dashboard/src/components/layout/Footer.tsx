@@ -135,7 +135,7 @@ export default function Footer() {
     <FooterContainer>
       <FooterGrid>
         <BrandColumn>
-          <Logo>LogEngine</Logo>
+          <Logo>Sijil</Logo>
           <Tagline>
             The observability platform designed for the AI era. Ingest, Query,
             and visualize at hyperspeed.
@@ -174,7 +174,7 @@ export default function Footer() {
 
       <BottomBar>
         <Copyright>
-          &copy; {new Date().getFullYear()} LogEngine Inc. All rights reserved.
+          &copy; {new Date().getFullYear()} Sijil Inc. All rights reserved.
         </Copyright>
         <Socials>
           <Link

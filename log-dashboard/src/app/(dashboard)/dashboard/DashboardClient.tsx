@@ -284,7 +284,7 @@ export default function DashboardClient({
                 letterSpacing: "-0.5px",
               }}
             >
-              LogEngine
+              Sijil
             </h2>
             <div
               style={{ height: "20px", width: "1px", background: "#30363d" }}

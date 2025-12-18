@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <AuthContainer>
       <AuthCard>
-        <AuthTitle>LogEngine</AuthTitle>
+        <AuthTitle>Sijil</AuthTitle>
         {children}
       </AuthCard>
     </AuthContainer>

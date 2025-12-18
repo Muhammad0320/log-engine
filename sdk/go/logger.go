@@ -66,14 +66,14 @@ type Client struct {
 func NewClient(cfg Config) *Client {
 
 	if cfg.APIKey == "" || cfg.APISecret == "" {
-		log.Fatal("LogEngine: Credentials missing!")
+		log.Fatal("Sijil: Credentials missing!")
 	}
 
 	if cfg.Endpoint == "" {
 		cfg.Endpoint = "http://localhost:8080/api/v1/logs"
 	}
 
-	if cfg.FlushTime == 0 || cfg.FlushTime < 500*time.Millisecond {
+	if cfg.FlushTime == 0 || cfg.FlushTime < 250*time.Millisecond {
 		cfg.FlushTime = 1 * time.Second
 	}
 
@@ -130,7 +130,7 @@ func (c *Client) push(level, msg string, data map[string]interface{}) {
 	select {	
 	case c.queue <- entry:
 	default:
-		fmt.Fprintf(os.Stderr, "LogEngine Queue full: Dropping los: %s\n", msg)
+		fmt.Fprintf(os.Stderr, "Sijil Queue full: Dropping los: %s\n", msg)
 	}
 } 
 
@@ -151,7 +151,7 @@ func (c *Client) Close() {
 func (c *Client) sendWithRetry(logs []LogEntry)  {
 	payload, err := json.Marshal(logs) 
 	if err != nil {
-		fmt.Printf("LogEngine SDK Error: Failed to marshal batch %v\n", err)
+		fmt.Printf("Sijil SDK Error: Failed to marshal batch %v\n", err)
 		return
 	}
 
@@ -171,7 +171,7 @@ func (c *Client) sendWithRetry(logs []LogEntry)  {
 	
 	// Network Error (DNS, timeout) -> Retry
 	if err != nil {
-		fmt.Printf("LogEngine SDK Error: Failed to send batch: %v\n", err)
+		fmt.Printf("Sijil SDK Error: Failed to send batch: %v\n", err)
 		continue 
 	}
 	defer res.Body.Close()
@@ -183,20 +183,20 @@ func (c *Client) sendWithRetry(logs []LogEntry)  {
 
 	// Server error -> Retry
 	if res.StatusCode >= 500 {
-		fmt.Printf("LogEngine SDK Error: Server error %d (attempt %d)\n", res.StatusCode, attempts+1)
+		fmt.Printf("Sijil SDK Error: Server error %d (attempt %d)\n", res.StatusCode, attempts+1)
 		continue
 	}
 
 	// Client error -> DO NOT retry (it will never succeed) 
 	if res.StatusCode >= 400 {
-		fmt.Printf("LogEngine: Rejected %d (Bad Config/Auth). Dropping batch.\n", res.StatusCode)
+		fmt.Printf("Sijil: Rejected %d (Bad Config/Auth). Dropping batch.\n", res.StatusCode)
 		return
 	}
 
 	}
 
 
-	fmt.Fprintf(os.Stderr, "LogEngine critical: Failed to send %d logs after multiple retries\n", len(logs))
+	fmt.Fprintf(os.Stderr, "Sijil critical: Failed to send %d logs after multiple retries\n", len(logs))
 }
 
 func (c *Client) worker(_ int) {

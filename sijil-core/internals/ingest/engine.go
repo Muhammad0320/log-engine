@@ -5,8 +5,8 @@ import (
 	"expvar"
 	"fmt"
 	"log"
-	"log-engine/internals/database"
-	"log-engine/internals/hub"
+	"sijil-core/internals/database"
+	"sijil-core/internals/hub"
 	"sync"
 	"time"
 

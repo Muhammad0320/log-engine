@@ -29,14 +29,14 @@ export class SijilLogger {
   };
 
   private queue: LogEntry[] = [];
-  private timer: NodeJS.Timeout | null = null;
+  private timer: ReturnType<typeof setInterval> | null = null;
   private activeRequests = 0;
   private readonly MAX_CURRENT_REQUEST = 5;
   private serviceName = "default";
 
   constructor(config: Config) {
     if (!config.apiKey || !config.apiSecret) {
-      throw new Error("LogEngine: Credentials Missing!");
+      throw new Error("Sijil: Credentials Missing!");
     }
 
     this.config = {
@@ -71,7 +71,7 @@ export class SijilLogger {
   private push(level: LogEntry["level"], message: string, data?: Object) {
     // Safety Cap
     if (this.queue.length >= 5000) {
-      console.warn("LogEngine Queue Full. Dropping logs");
+      console.warn("Sijil Queue Full. Dropping logs");
       return;
     }
 
@@ -97,7 +97,7 @@ export class SijilLogger {
     try {
       await this.sendWithRetry(batch);
     } catch (error) {
-      console.error("LogEngine Delivery failed:", error);
+      console.error("Sijil Delivery failed:", error);
     } finally {
       this.activeRequests--;
     }
@@ -117,8 +117,7 @@ export class SijilLogger {
 
       if (!res.ok) {
         if (res.status >= 500) throw new Error(`Server Error ${res.status}`);
-        if (res.status >= 400)
-          console.error(`LogEngine Rejected: ${res.status}`);
+        if (res.status >= 400) console.error(`Sijil Rejected: ${res.status}`);
       }
     } catch (error) {
       if (attempt < this.config.maxRetries) {

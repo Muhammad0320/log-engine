@@ -74,7 +74,7 @@ export default function MarketingLayout({
   return (
     <div style={{ backgroundColor: "#050505", minHeight: "100vh" }}>
       <Nav>
-        <Logo>LogEngine</Logo>
+        <Logo>Sijil</Logo>
 
         {/* Hide links on mobile for now to prevent clutter */}
         <NavLinks style={{ display: "none" }}>
