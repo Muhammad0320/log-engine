@@ -73,7 +73,13 @@ func (r *postgresRepository) GetByID(ctx context.Context, id int) (*User, error)
 }
 
 func (r *postgresRepository) VerifyUserAccount(ctx context.Context, token string) error {
-	_, err := r.db.Exec(ctx, "UPDATE users SET is_verified = TRUE, verification_token = NULL WHERE verification_token = $1", token)
+	_, err := r.db.Exec(ctx, `
+	UPDATE users 
+	SET is_verified = TRUE, 
+		verification_token = NULL,
+		verification_token_expired = NULL
+	WHERE verification_token = $1
+	AND verification_token_expires > NOW()`, token)
 	return err
 }
 
