@@ -210,7 +210,7 @@ func (w *WAL) Close() error {
 	return nil
 }
 
-func (w *WAL) CleanupOldSegments() error {
+func (w *WAL) CleanupSafeSegments(retainCount int) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -219,13 +219,24 @@ func (w *WAL) CleanupOldSegments() error {
 		return err
 	}
 
-	for _, e := range entries {
-		var seq int
-		fmt.Sscanf(e.Name(), "segment-%d.log", &seq)
+	safeThreshold := w.activeSeq - retainCount
+	if safeThreshold < 1 {
+		return nil
+	}
 
-		if seq < w.activeSeq {
-			path := filepath.Join(w.dir, e.Name())
-			os.Remove(path)
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), "segment-") && strings.HasSuffix(e.Name(), ".log") {
+			var seq int
+			_, err := fmt.Sscanf(e.Name(), "segment-%d.log", &seq)
+			if err == nil && seq < safeThreshold {
+
+				path := filepath.Join(w.dir, e.Name())
+				if err := os.Remove(path); err != nil {
+					fmt.Printf("⚠️ Failed to remove old segment %s: %v\n", e.Name(), err)
+				} else {
+					fmt.Printf("🧹 Deleted old segment: %s\n", e.Name())
+				}
+			}
 		}
 	}
 	return nil

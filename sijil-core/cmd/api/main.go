@@ -65,7 +65,7 @@ func main() {
 	authCache := auth.NewAuthCache(db)
 
 	// -- WAL
-	wal, err := ingest.NewWal("ingest.wal")
+	wal, err := ingest.NewWal("wal_data")
 	if err != nil {
 		log.Fatal("Could not open wal %w", err)
 	}
