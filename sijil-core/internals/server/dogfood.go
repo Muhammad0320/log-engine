@@ -62,7 +62,7 @@ func (s *Server) DogFoodMiddleware() gin.HandlerFunc {
 			ProjectID: internalPID,
 		}
 		
-		if err := s.ingestEngine.Wal.WriteLog(logEntry); err == nil {
+		if err := s.ingestEngine.Wal.WriteBatch([logEntry]); err == nil {
 			s.ingestEngine.LogQueue <- logEntry
 		}
 	}
