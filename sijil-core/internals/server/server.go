@@ -5,7 +5,6 @@ import (
 	"expvar"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"sijil-core/internals/auth"
 	"sijil-core/internals/database"
@@ -300,98 +299,6 @@ func (s *Server) handleWsLogic(c *gin.Context) {
 	}
 
 	hub.ServeWs(s.hub, c.Writer, c.Request, projectID, userID.(int))
-}
-
-func (s *Server) handleUserRegister(c *gin.Context) {
-
-	var req struct {
-		FirstName string `json:"firstname" validate:"required,min=2"`
-		LastName  string `json:"lastname" validate:"required,min=2"`
-		Email     string `json:"email" validate:"required,email"`
-		Password  string `json:"password" validate:"required,min=8"`
-	}
-
-	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
-		return
-	}
-
-	if err := validate.Struct(req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	hash, err := auth.HashPasswod(req.Password)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to has password"})
-		return
-	}
-
-	vToken, _ := utils.GenerateRandomString(32)
-	vTokenHash := utils.Hashtoken(vToken)
-	vExpiry := time.Now().Add(24 * time.Hour)
-
-	newUserId, err := database.CreateUser(c.Request.Context(), s.db, req.FirstName, req.LastName, req.Email, hash, vTokenHash, vExpiry)
-	if err != nil {
-		if errors.Is(err, database.EmailExists) {
-			c.JSON(http.StatusConflict, gin.H{"error": "409 Confilict: this email is already registered"})
-			return
-		}
-
-		fmt.Printf("Internal error: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
-		return
-	}
-
-	go func() {
-		// Mock for Resend later inshaallah
-		fmt.Printf("Verification Link: ")
-	}()
-
-	tokenString, err := auth.CreateJWT(s.jwtSecret, newUserId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create token"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"token": tokenString})
-}
-
-func (s *Server) handleUserLogin(c *gin.Context) {
-
-	var req struct {
-		Email    string `json:"email" validate:"required,email"`
-		Password string `json:"password" validate:"required"`
-	}
-
-	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"errors": "invalid request body"})
-		return
-	}
-
-	if err := validate.Struct(req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	user, err := database.GetUserByEmail(c.Request.Context(), s.db, req.Email)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
-		return
-	}
-
-	if err := auth.ComparePasswordHash(req.Password, user.PasswordHash); !err {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
-		return
-	}
-
-	tokenString, err := auth.CreateJWT(s.jwtSecret, user.ID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create token"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"token": tokenString})
 }
 
 func (s *Server) handleCreateProject(c *gin.Context) {
