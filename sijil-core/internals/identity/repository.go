@@ -10,5 +10,5 @@ type Repository interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, id int) (*User, error)
 	VerifyUserAccount(ctx context.Context, token string) error
-	SetResetToken(ctx context.Context, email string, token string, expiry time.Time) error
+	SetPasswordResetToken(ctx context.Context, email string, token string, expiry time.Time) error
 }
