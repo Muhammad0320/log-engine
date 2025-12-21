@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -50,5 +51,40 @@ func (r *postgresRepository) GetByEmail(ctx context.Context, email string) (*Use
 		return nil, errors.New("user not found")
 	}
 	return &u, nil
+
+}
+
+func (r *postgresRepository) GetByID(ctx context.Context, id int) (*User, error) {
+
+	var u User
+
+	err := r.db.QueryRow(ctx,
+		`SELECT id, firstname, lastname, email, password_hash, plan, is_verified 
+         FROM users WHERE id = $1`,
+		id,
+	).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.PasswordHash, &u.Plan, &u.IsVerified)
+
+	if err != nil {
+		return &u, errors.New("user not found")
+	}
+
+	return &u, nil
+
+}
+
+func (r *postgresRepository) VerifyUserAccount(ctx context.Context, token string) error {
+	_, err := r.db.Exec(ctx, "UPDATE users SET is_verified = TRUE, verification_token = NULL WHERE verification_token = $1", token)
+	return err
+}
+
+func (r *postgresRepository) SetPasswordResetToken(ctx context.Context, email string, token string, expiry time.Time) error {
+
+	_, err := r.db.Exec(ctx, `
+	UPDATE users
+	SET password_reset_token = $1, password_reset_expired = $2
+	WHERE email = $3
+	`, token, expiry, email)
+
+	return err
 
 }
