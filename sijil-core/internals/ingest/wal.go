@@ -1,9 +1,13 @@
 package ingest
 
 import (
+	"encoding/binary"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"sijil-core/internals/database"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -63,6 +67,42 @@ func (w *WAL) openSegment(seq int) error {
 	return nil
 }
 
+func (w *WAL) WriteBatch(batch []database.LogEntry) error {
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	// 1. Check Rotation
+	if w.currentSize > MaxSegmentSize {
+		if err := w.rotate(); err != nil {
+			return err
+		}
+	}
+
+	for _, entry := range batch {
+		data, err := entry.Serialize()
+		if err != nil {
+			continue
+		}
+
+		// Write Length Prefix (for easy reading later)
+		length := int32(len(data))
+		if err := binary.Write(w.activeFile, binary.LittleEndian, length); err != nil {
+			return err
+		}
+
+		// Write Data
+		n, err := w.activeFile.Write(data)
+		if err != nil {
+			return err
+		}
+
+		w.currentSize += int64(4 + n)
+	}
+
+	return w.activeFile.Sync()
+}
+
 // rotate closes the current file and opens the next sequence
 func (w *WAL) rotate() error {
 	if w.activeFile != nil {
@@ -71,4 +111,71 @@ func (w *WAL) rotate() error {
 
 	newSeq := w.activeSeq + 1
 	return w.openSegment(newSeq)
+}
+
+func (w *WAL) Recover() ([]database.LogEntry, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	var allLogs []database.LogEntry
+
+	// Get all segment files sorted
+	entries, err := os.ReadDir(w.dir)
+	if err != nil {
+		return nil, err
+	}
+
+	var filenames []string
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), "segment-") {
+			filenames = append(filenames, filepath.Join(w.dir, e.Name()))
+		}
+	}
+	sort.Strings(filenames)
+
+	for _, fname := range filenames {
+		logs, err := w.readSegment(fname)
+		if err != nil {
+			fmt.Printf("⚠️ Corrupt segment %s: %v\n", fname, err)
+			continue // Try to read the rest
+		}
+		allLogs = append(allLogs, logs...)
+	}
+
+	return allLogs, nil
+}
+
+func (w *WAL) readSegment(path string) ([]database.LogEntry, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var logs []database.LogEntry
+	for {
+		// Read Length
+		var length int32
+		if err := binary.Read(f, binary.LittleEndian, &length); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return logs, err
+		}
+
+		// Read Data
+		data := make([]byte, length)
+		if _, err := io.ReadFull(f, data); err != nil {
+			return logs, err
+		}
+
+		// Deserialize (Assuming JSON for now)
+		// You need to ensure LogEntry has a generic deserializer or use json.Unmarshal
+		var entry database.LogEntry
+		if err := entry.Deserialize(data); err != nil {
+			continue
+		}
+		logs = append(logs, entry)
+	}
+	return logs, nil
 }
