@@ -72,10 +72,10 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
 	is_verified BOOLEAN DEFAULT FALSE,
 	verification_token TEXT,
-	verification_expires_at TIMESTAMP,
+	verification_expires TIMESTAMP,
 	token_expires_at TIMESTAMP,
 	password_reset_token TEXT,
-	password_reset_expired TIMESTAMP,
+	password_reset_expires TIMESTAMP,
     avatar_url TEXT,
 	plan VARCHAR(50) NOT NULL DEFAULT 'free',
     created_at TIMESTAMPTZ DEFAULT NOW()

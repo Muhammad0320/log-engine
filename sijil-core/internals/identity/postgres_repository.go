@@ -103,3 +103,22 @@ func (r *postgresRepository) SetPasswordResetToken(ctx context.Context, email st
 	return err
 
 }
+
+func (r *postgresRepository) ResetPasswordByToken(ctx context.Context, token, passwordHash string) error {
+
+	commandTag, err := r.db.Exec(ctx, `
+		UPDATE users
+		SET password_hash = $1, password_reset_token = NULL, password_reset_expires = NULL 
+		WHERE password_reset_token = $2 AND password_reset_expires > NOW()
+	`, passwordHash, token)
+
+	if err != nil {
+		return err
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		return errors.New("invalid or expired token")
+	}
+
+	return nil
+}
