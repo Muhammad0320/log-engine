@@ -17,7 +17,7 @@ func NewHandler(s *Service) *Handler {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	userID := c.GetInt("userID") // Set by Auth Middleware
+	userID := c.GetInt("userID")
 	var req CreateProjectRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -89,6 +89,7 @@ func (h *Handler) GetMembers(c *gin.Context) {
 			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			return
 		}
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
 		return
 	}
