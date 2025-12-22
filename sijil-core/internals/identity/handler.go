@@ -75,7 +75,7 @@ func (h *Handler) ForgotPassword(c *gin.Context) {
 		Email string `json:"email" binding:"required,email"`
 	}
 
-	if err := c.BindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
 		return
 	}
@@ -83,4 +83,25 @@ func (h *Handler) ForgotPassword(c *gin.Context) {
 	_ = h.service.ForgotPassword(c.Request.Context(), req.Email)
 
 	c.JSON(http.StatusOK, gin.H{"message": "If account exists, a reset link has been sent."})
+}
+
+func (h *Handler) ResetPassword(c *gin.Context) {
+
+	var req struct {
+		Token    string `json:"token" binding:"required"`
+		Password string `json:"password" binding:"required,min=8"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.service.ResetPassword(c.Request.Context(), req.Token, req.Password); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "password reset successfully"})
+
 }
