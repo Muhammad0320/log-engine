@@ -1,0 +1,29 @@
+Attempting to connect with connection string: postgres://postgres:logpassword123@127.0.0.1:5434/log_db?sslmode=disable
+Successfully connected to the database!
+Database FTS is ready!
+Database schema is ready!
+Websocket has started! -------
+Checking was for unsaved logs
+✅ Wal is empty. Clean startup.
+Staring ingesting engine with 50 workers[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] POST   /api/v1/auth/register     --> sijil-core/internals/identity.(*Handler).Register-fm (5 handlers)
+[GIN-debug] POST   /api/v1/auth/login        --> sijil-core/internals/identity.(*Handler).Login-fm (5 handlers)
+[GIN-debug] GET    /api/v1/auth/verify       --> sijil-core/internals/server.(*Server).handleVerifyEmail-fm (6 handlers)
+[GIN-debug] POST   /api/v1/auth/forgot-password --> sijil-core/internals/server.(*Server).handleForgotPassword-fm (6 handlers)
+[GIN-debug] POST   /api/v1/auth/reset-password --> sijil-core/internals/server.(*Server).handleResetPassword-fm (6 handlers)
+[GIN-debug] POST   /api/v1/projects          --> sijil-core/internals/server.(*Server).handleCreateProject-fm (6 handlers)
+[GIN-debug] GET    /api/v1/projects          --> sijil-core/internals/server.(*Server).handleListProjects-fm (6 handlers)
+[GIN-debug] POST   /api/v1/projects/:id/members --> sijil-core/internals/server.(*Server).handleAddMember-fm (6 handlers)
+[GIN-debug] GET    /api/v1/projects/:id/members --> sijil-core/internals/server.(*Server).handleGetMembers-fm (6 handlers)
+[GIN-debug] GET    /api/v1/logs              --> sijil-core/internals/server.(*Server).handleGetLogs-fm (6 handlers)
+[GIN-debug] GET    /api/v1/logs/stats        --> sijil-core/internals/server.(*Server).handleGetStats-fm (6 handlers)
+[GIN-debug] GET    /api/v1/logs/summary      --> sijil-core/internals/server.(*Server).handleGetSummary-fm (6 handlers)
+[GIN-debug] GET    /api/v1/logs/ws           --> sijil-core/internals/server.(*Server).handleWsLogic-fm (6 handlers)
+[GIN-debug] POST   /api/v1/logs              --> sijil-core/internals/server.(*Server).handleLogIngest-fm (6 handlers)
+[GIN-debug] GET    /debug/vars               --> sijil-core/internals/server.(*Server).registerRoutes.WrapH.func7 (6 handlers)
+🚀 High-Throughtput Log Engine running on port :8080
