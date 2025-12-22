@@ -16,12 +16,12 @@ var (
 )
 
 type Repository interface {
-	Create(ctx context.Context, project Project) (int, error)
+	Create(ctx context.Context, project *Project) (int, error)
 	GetByID(ctx context.Context, projectID int) (*Project, error)
 	ListByUserID(ctx context.Context, userID int) ([]Project, error)
 
 	// Membership
-	GetRole(ctx context.Context, projectID, userID int) (string error)
+	GetRole(ctx context.Context, projectID, userID int) (string, error)
 	AddMember(ctx context.Context, projectID int, email, role string) error
 	ListMembers(ctx context.Context, projectID int) ([]ProjectMember, error)
 
