@@ -90,3 +90,14 @@ func (s *Service) ForgotPassword(ctx context.Context, email string) error {
 
 	return nil
 }
+
+func (s *Service) ResetPassword(ctx context.Context, rawToken, password string) error {
+
+	hashedToken := utils.Hashtoken(rawToken)
+	hashPassword, err := auth.HashPasswod(password)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.ResetPasswordByToken(ctx, hashedToken, hashPassword)
+}
