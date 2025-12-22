@@ -11,6 +11,7 @@ import (
 	"sijil-core/internals/hub"
 	"sijil-core/internals/identity"
 	"sijil-core/internals/ingest"
+	"sijil-core/internals/projects"
 	"sijil-core/internals/utils"
 	"strconv"
 	"time"
@@ -30,9 +31,10 @@ type Server struct {
 	// -----
 	Router          *gin.Engine
 	identityHandler *identity.Handler
+	projectHandler  *projects.Handler
 }
 
-func NewServer(db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.Hub, authCache *auth.AuthCache, jwtSecret string, identityHandler *identity.Handler) *Server {
+func NewServer(db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.Hub, authCache *auth.AuthCache, jwtSecret string, identityHandler *identity.Handler, projectHandler *projects.Handler) *Server {
 	s := &Server{
 		db:           db,
 		ingestEngine: ingestEngine,
@@ -41,6 +43,7 @@ func NewServer(db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.
 		jwtSecret:    jwtSecret,
 
 		identityHandler: identityHandler,
+		projectHandler:  projectHandler,
 	}
 
 	router := gin.Default()
@@ -95,10 +98,10 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 	protected.Use(s.authMiddleware())
 	{
 		// Projects
-		protected.POST("/projects", s.handleCreateProject)
-		protected.GET("/projects", s.handleListProjects)
-		protected.POST("/projects/:id/members", s.handleAddMember)
-		protected.GET("/projects/:id/members", s.handleGetMembers)
+		protected.POST("/projects", s.projectHandler.Create)
+		protected.GET("/projects", s.projectHandler.List)
+		protected.POST("/projects/:id/members", s.projectHandler.AddMember)
+		protected.GET("/projects/:id/members", s.projectHandler.GetMembers)
 
 		// Logs
 		protected.GET("logs", s.handleGetLogs)
