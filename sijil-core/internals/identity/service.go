@@ -9,13 +9,16 @@ import (
 	"time"
 )
 
+type EmailSender func(email, subject, body string) error
+
 type Service struct {
 	repo      Repository
 	jwtSecret string
+	mailer    EmailSender
 }
 
-func NewService(repo Repository, jwtSecret string) *Service {
-	return &Service{repo: repo, jwtSecret: jwtSecret}
+func NewService(repo Repository, jwtSecret string, mailer EmailSender) *Service {
+	return &Service{repo: repo, jwtSecret: jwtSecret, mailer: mailer}
 }
 
 func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, error) {
@@ -42,9 +45,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, er
 		return "", err
 	}
 
-	go func(email, token string) {
-		fmt.Printf("📧 [Email Mock] To: %s | Subject: Verify Account | Link: https://sijil.dev/verify?token=%s\n", email, token)
-	}(u.Email, rawToken)
+	go s.mailer(u.Email, "Verify Account", rawToken)
 
 	return auth.CreateJWT(s.jwtSecret, id)
 }

@@ -124,8 +124,13 @@ func main() {
 		log.Fatal("FATAL: JWT_SECRET environment variable is not set")
 	}
 
+	mailer := func(email, subject, body string) error {
+		fmt.Printf("[Real mock] To %s | Token %s\n", email, body)
+		return nil
+	}
+
 	identityRepo := identity.NewRepository(db)
-	identityService := identity.NewService(identityRepo, jwtSecret)
+	identityService := identity.NewService(identityRepo, jwtSecret, mailer)
 	identityHandler := identity.NewHandler(identityService)
 
 	// -- Ingesting engine
