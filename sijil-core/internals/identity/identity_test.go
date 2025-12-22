@@ -3,6 +3,7 @@ package identity_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,17 +12,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
 
 // setupTestDB creates a temporary connection.
 // Ideally, this uses a separate TEST_DB or cleans up tables.
 func setupTestDB() *pgxpool.Pool {
-	connString := os.Getenv("TEST_DB_URL") // e.g. postgres://user:pass@localhost:5432/sijil_test
-	if connString == "" {
-		// Fallback for local dev speed
-		connString = "postgres://postgres:password@localhost:5433/log_db?sslmode=disable"
+	_ = godotenv.Load("../../.env")
+
+	dbPassword := os.Getenv("DB_PASSWORD")
+	if dbPassword == "" {
+		dbPassword = "logpassword123"
 	}
+	connString := fmt.Sprintf("postgres://postgres:%s@127.0.0.1:5433/log_db?sslmode=disable", dbPassword)
 
 	ctx := context.Background()
 	db, err := pgxpool.New(ctx, connString)
