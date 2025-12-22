@@ -25,13 +25,14 @@ func setupTestDB() *pgxpool.Pool {
 	if dbPassword == "" {
 		dbPassword = "logpassword123"
 	}
-	connString := fmt.Sprintf("postgres://postgres:%s@127.0.0.1:5433/log_db?sslmode=disable", dbPassword)
+	connString := fmt.Sprintf("postgres://postgres:%s@127.0.0.1:5434/log_db?sslmode=disable", dbPassword)
 
 	ctx := context.Background()
 	db, err := pgxpool.New(ctx, connString)
 	if err != nil {
 		panic(err)
 	}
+
 	return db
 }
 
@@ -70,8 +71,14 @@ func TestIdentityFlow(t *testing.T) {
 	t.Log("STEP 1: Registering...")
 	regBody := `{"firstname":"Ali","lastname":"Test","email":"test@sijil.dev","password":"password123"}`
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/auth/register", bytes.NewBufferString(regBody))
+	req, err := http.NewRequest("POST", "/auth/register", bytes.NewBufferString(regBody))
+	if err != nil {
+		fmt.Printf("Shit just happend -------------- : %s", err)
+		return
+	}
+
 	r.ServeHTTP(w, req)
+	fmt.Println(w.Body.String(), "-------------------------")
 	assert.Equal(t, 201, w.Code)
 
 	// B. VERIFY (Using captured token!)

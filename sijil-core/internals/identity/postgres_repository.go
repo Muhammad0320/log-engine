@@ -21,7 +21,7 @@ func NewRepository(db *pgxpool.Pool) Repository {
 func (r *postgresRepository) Create(ctx context.Context, u *User) (int, error) {
 	var newUserID int
 	err := r.db.QueryRow(ctx,
-		`INSERT INTO users (firstname, lastname, email, password_hash, verification_token, verification_token_expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+		`INSERT INTO users (firstname, lastname, email, password_hash, verification_token, verification_expires) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
 		u.FirstName, u.LastName, u.Email, u.PasswordHash, u.VerificationToken, u.VerificationTokenExpires,
 	).Scan(&newUserID)
 
@@ -77,9 +77,9 @@ func (r *postgresRepository) VerifyUserAccount(ctx context.Context, token string
 	UPDATE users 
 	SET is_verified = TRUE, 
 		verification_token = NULL,
-		verification_token_expired = NULL
+		verification_expires = NULL
 	WHERE verification_token = $1
-	AND verification_token_expires > NOW()`, token)
+	AND verification_expires > NOW()`, token)
 
 	if err != nil {
 		return fmt.Errorf("db verification error: %w", err)
