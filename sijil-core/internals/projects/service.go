@@ -11,12 +11,18 @@ import (
 var ErrForbidden = errors.New("you do not have permission to perform this action")
 var ErrLimitReached = errors.New("plan limit reached")
 
+type EmailSender func(email, subject, body string) error
+
 type Service struct {
-	repo Repository
+	repo   Repository
+	mailer EmailSender
 }
 
-func NewService(repo Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo Repository, mailer EmailSender) *Service {
+	return &Service{
+		repo:   repo,
+		mailer: mailer,
+	}
 }
 
 type CreateProjectResponse struct {
@@ -33,7 +39,7 @@ func (s *Service) CreateProject(ctx context.Context, userID int, req CreateProje
 	}
 
 	count, _ := s.repo.CountProjects(ctx, userID)
-	limits := database.GetPlanLimits(plan) // Assuming you have this helper in shared/database
+	limits := database.GetPlanLimits(plan)
 	if count >= limits.MaxProject {
 		return nil, ErrLimitReached
 	}
@@ -70,16 +76,14 @@ func (s *Service) ListProjects(ctx context.Context, userID int) ([]Project, erro
 	return s.repo.ListByUserID(ctx, userID)
 }
 func (s *Service) AddMember(ctx context.Context, userID int, projectID int, req AddMemberRequest) error {
-	// 1. Fetch Project to identify the REAL owner
+
 	project, err := s.repo.GetByID(ctx, projectID)
 	if err != nil {
-		return err // Project not found
+		return err
 	}
 
-	// 2. Check Permissions (The "Business" Logic)
 	isOwner := project.UserID == userID
 
-	// If not owner, check if they are an admin
 	isAuth := isOwner
 	if !isAuth {
 		role, err := s.repo.GetRole(ctx, projectID, userID)
@@ -89,11 +93,9 @@ func (s *Service) AddMember(ctx context.Context, userID int, projectID int, req 
 	}
 
 	if !isAuth {
-		return ErrForbidden // "You are not the Owner or an Admin"
+		return ErrForbidden
 	}
 
-	// 3. Check Limits (Owner's Plan counts, not the Admin's)
-	// We check the plan of the Project Owner (project.UserID)
 	plan, _ := s.repo.GetUserPlan(ctx, project.UserID)
 	currentMembers, _ := s.repo.CountMembers(ctx, projectID)
 	limits := database.GetPlanLimits(plan)

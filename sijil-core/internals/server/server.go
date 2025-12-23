@@ -12,6 +12,7 @@ import (
 	"sijil-core/internals/identity"
 	"sijil-core/internals/ingest"
 	"sijil-core/internals/projects"
+	"sijil-core/internals/shared"
 	"sijil-core/internals/utils"
 	"strconv"
 	"time"
@@ -34,7 +35,7 @@ type Server struct {
 	projectHandler  *projects.Handler
 }
 
-func NewServer(db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.Hub, authCache *auth.AuthCache, jwtSecret string, identityHandler *identity.Handler, projectHandler *projects.Handler) *Server {
+func NewServer(db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.Hub, authCache *auth.AuthCache, jwtSecret string, handler shared.Handlers) *Server {
 	s := &Server{
 		db:           db,
 		ingestEngine: ingestEngine,
@@ -42,8 +43,8 @@ func NewServer(db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.
 		authCache:    authCache,
 		jwtSecret:    jwtSecret,
 
-		identityHandler: identityHandler,
-		projectHandler:  projectHandler,
+		identityHandler: handler.Identity,
+		projectHandler:  handler.Projects,
 	}
 
 	router := gin.Default()
