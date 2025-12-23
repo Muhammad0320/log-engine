@@ -62,6 +62,24 @@ func CreateSchema(ctx context.Context, db *pgxpool.Pool) error {
 		return fmt.Errorf("failed to enable timescaledb extension: %w", err)
 	}
 
+	createPlansTableSQL := `
+
+	CREATE TABLE plans IF NOT EXISTS (
+		id 	SERIAL PRIMARY KEY,
+		name VARCHAR(50) UNIQUE NOT NULL,
+		max_project INT NOT NULL DEFAULT 3,
+		max_members INT NOT NULL DEFAULT 1,
+		retention_days INT NOT NULL DEFAULT 3,
+		max_daily_logs BIGINT NOT NULL,
+		price_monthly DECIMAL(10, 2) NOT NULL
+		);
+	`
+
+	_, err = db.Exec(ctx, createPlansTableSQL)
+	if err != nil {
+		return fmt.Errorf("failed to create plans table %w\n", err)
+	}
+
 	// Create user tables
 	createUserTableSQL := `
 CREATE TABLE IF NOT EXISTS users (
@@ -77,7 +95,7 @@ CREATE TABLE IF NOT EXISTS users (
 	password_reset_token TEXT,
 	password_reset_expires TIMESTAMP,
     avatar_url TEXT,
-	plan VARCHAR(50) NOT NULL DEFAULT 'free',
+	plan_id INTEGER  NOT NULL REFERENCES plans(id),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 `
