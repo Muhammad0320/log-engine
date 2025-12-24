@@ -42,8 +42,8 @@ func (r *postgresRepository) GetPlanByUserID(ctx context.Context, id int) (*Plan
 func (r *postgresRepository) Create(ctx context.Context, u *User) (int, error) {
 	var newUserID int
 	err := r.db.QueryRow(ctx,
-		`INSERT INTO users (firstname, lastname, email, password_hash, verification_token, verification_expires) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-		u.FirstName, u.LastName, u.Email, u.PasswordHash, u.VerificationToken, u.VerificationTokenExpires,
+		`INSERT INTO users (firstname, lastname, email, password_hash, verification_token, verification_expires, plan_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+		u.FirstName, u.LastName, u.Email, u.PasswordHash, u.VerificationToken, u.VerificationTokenExpires, 1,
 	).Scan(&newUserID)
 
 	if err != nil {

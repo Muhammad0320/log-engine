@@ -45,7 +45,7 @@ func (s *Service) Ingest(ctx context.Context, projectID int, logs []LogEntry) er
 
 	var dbLogs []database.LogEntry
 	for _, l := range logs {
-		dbLogs = append(dbLogs, database.LogEntry(l)) // conversion
+		dbLogs = append(dbLogs, database.LogEntry(l))
 	}
 
 	if err := s.engine.Wal.WriteBatch(dbLogs); err != nil {
@@ -64,7 +64,7 @@ func (s *Service) Ingest(ctx context.Context, projectID int, logs []LogEntry) er
 }
 
 // Search: The read path
-func (s *Service) Search(ctx context.Context, userID, projectID int, query string, limit, offset int) ([]LogEntry, error) {
+func (s *Service) Search(ctx context.Context, userID, projectID int, query string, limit, offset, retentionDays int) ([]LogEntry, error) {
 	// 1. Permission Check
 	if err := s.checkAccess(ctx, userID, projectID); err != nil {
 		return nil, err
@@ -74,8 +74,7 @@ func (s *Service) Search(ctx context.Context, userID, projectID int, query strin
 	to := time.Now()
 	from := to.Add(-24 * time.Hour)
 
-	// A HUGEEEEEEEEEEEEEEEEE   TRASH
-	return s.repo.SearchLogs(ctx, projectID, limit, offset, query, from, to, 10)
+	return s.repo.SearchLogs(ctx, projectID, limit, offset, query, from, to, retentionDays)
 }
 
 func (s *Service) checkAccess(ctx context.Context, userID, projectID int) error {

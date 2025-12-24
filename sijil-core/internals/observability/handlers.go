@@ -1,6 +1,7 @@
 package observability
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -38,6 +39,10 @@ func (h *Handler) Search(c *gin.Context) {
 	userID := c.GetInt("userID") // Set by JWT Middleware
 	projectID, _ := strconv.Atoi(c.Query("project_id"))
 
+	plan := c.MustGet("plan").(*Plan)
+
+	fmt.Println("plannn ---------------", plan)
+
 	if projectID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "project_id required"})
 		return
@@ -47,7 +52,7 @@ func (h *Handler) Search(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "100"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	logs, err := h.service.Search(c.Request.Context(), userID, projectID, query, limit, offset)
+	logs, err := h.service.Search(c.Request.Context(), userID, projectID, query, limit, offset, plan.RetentionDays)
 	if err != nil {
 		if err == ErrForbidden {
 			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
