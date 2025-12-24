@@ -30,7 +30,7 @@ type Server struct {
 	jwtSecret    string
 	// -----
 	Router          *gin.Engine
-	identityRepo    *identity.Repository
+	identityRepo    identity.Repository
 	identityHandler *identity.Handler
 	projectHandler  *projects.Handler
 }

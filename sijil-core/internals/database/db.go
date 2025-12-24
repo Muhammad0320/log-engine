@@ -64,10 +64,10 @@ func CreateSchema(ctx context.Context, db *pgxpool.Pool) error {
 
 	createPlansTableSQL := `
 
-	CREATE TABLE plans IF NOT EXISTS (
+	CREATE TABLE IF NOT EXISTS plans (
 		id 	SERIAL PRIMARY KEY,
 		name VARCHAR(50) UNIQUE NOT NULL,
-		max_project INT NOT NULL DEFAULT 3,
+		max_projects INT NOT NULL DEFAULT 3,
 		max_members INT NOT NULL DEFAULT 1,
 		retention_days INT NOT NULL DEFAULT 3,
 		max_daily_logs BIGINT NOT NULL,
