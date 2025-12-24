@@ -35,7 +35,6 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, er
 		Email:        req.Email,
 		PasswordHash: hash,
 
-		Plan:                     "free",
 		VerificationToken:        &hashedToken,
 		VerificationTokenExpires: &expires,
 	}

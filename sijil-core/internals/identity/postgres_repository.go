@@ -63,10 +63,10 @@ func (r *postgresRepository) GetByEmail(ctx context.Context, email string) (*Use
 	var u User
 
 	err := r.db.QueryRow(ctx,
-		`SELECT id, firstname, lastname, email, password_hash, plan, is_verified 
+		`SELECT id, firstname, lastname, email, password_hash, plan_id, is_verified 
          FROM users WHERE email = $1`,
 		email,
-	).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.PasswordHash, &u.Plan, &u.IsVerified)
+	).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.PasswordHash, &u.PlanID, &u.IsVerified)
 
 	if err != nil {
 		return nil, errors.New("user not found")
