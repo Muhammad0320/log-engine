@@ -18,9 +18,21 @@ func NewRepository(db *pgxpool.Pool) Repository {
 	return &postgresRepository{db: db}
 }
 
-func (r *postgresRepository) GetPlanByUserID(ctx context.Context, id int) (*Plan, error) {
+func (r *postgresRepository) GetPlanByUserPlanID(ctx context.Context, id int) (*Plan, error) {
 
-	return &Plan{}, nil
+	var p Plan
+
+	err := r.db.QueryRow(ctx, `
+	SELECT id, name, max_projects, max_members, max_daily_logs, retention_days
+ 	FROM plans 
+	WHERE id = $1
+	`, id)
+
+	if err != nil {
+		return nil, fmt.Errorf("faild to get plan %s", err)
+	}
+
+	return &p, nil
 }
 
 func (r *postgresRepository) Create(ctx context.Context, u *User) (int, error) {
