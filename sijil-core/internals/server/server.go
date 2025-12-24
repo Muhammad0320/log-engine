@@ -44,8 +44,8 @@ func NewServer(db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.
 		jwtSecret:    jwtSecret,
 
 		identityRepo:    handler.IdentityRepo,
-		identityHandler: handler.Identity,
 		projectHandler:  handler.Projects,
+		identityHandler: handler.Identity,
 	}
 
 	router := gin.Default()

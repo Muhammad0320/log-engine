@@ -32,11 +32,11 @@ type CreateProjectResponse struct {
 	APISecret string `json:"api_secret"`
 }
 
-func (s *Service) CreateProject(ctx context.Context, userID int, req CreateProjectRequest, *domain.Plan) (*CreateProjectResponse, error) {
+func (s *Service) CreateProject(ctx context.Context, userID int, req CreateProjectRequest, plan *domain.Plan) (*CreateProjectResponse, error) {
 	// 1. Check Plan Limits
 	count, _ := s.repo.CountProjects(ctx, userID)
 
-	if count >= plan.MaxProject {
+	if count >= plan.MaxProjects {
 		return nil, ErrLimitReached
 	}
 
