@@ -7,6 +7,7 @@ type User struct {
 	FirstName                string     `json:"firstname"`
 	LastName                 string     `json:"lastname"`
 	Email                    string     `json:"email"`
+	PlanID                   int        `json:"-"`
 	PasswordHash             string     `json:"-"`
 	IsVerified               bool       `json:"is_verified"`
 	VerificationToken        *string    `json:"-"`
@@ -31,6 +32,7 @@ type LoginRequest struct {
 }
 
 type Plan struct {
+	ID            int
 	Name          string
 	MaxDailyLogs  int
 	RetentionDays int
