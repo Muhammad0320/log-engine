@@ -79,9 +79,9 @@ func ParseTime(c *gin.Context) (time.Time, time.Time) {
 func (s *Server) registerRoutes(router *gin.Engine) {
 	router.Use(s.SecurityHeadersMiddleware())
 
-	if s.ingestEngine != nil {
-		router.Use(s.DogFoodMiddleware())
-	}
+	// if s.ingestEngine != nil {
+	// 	router.Use(s.DogFoodMiddleware())
+	// }
 
 	apiv1 := router.Group("/api/v1")
 

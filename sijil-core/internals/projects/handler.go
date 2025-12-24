@@ -2,6 +2,7 @@ package projects
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -34,6 +35,7 @@ func (h *Handler) Create(c *gin.Context) {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 			return
 		}
+		fmt.Println(err, "----------------------------------------")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create project"})
 		return
 	}

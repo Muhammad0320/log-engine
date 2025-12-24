@@ -140,8 +140,9 @@ func main() {
 	projectHandler := projects.NewHandler(projectService)
 
 	handlers := shared.Handlers{
-		Identity: identityHandler,
-		Projects: projectHandler,
+		IdentityRepo: identityRepo,
+		Identity:     identityHandler,
+		Projects:     projectHandler,
 	}
 
 	// -- Ingesting engine
