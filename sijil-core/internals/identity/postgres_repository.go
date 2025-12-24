@@ -18,18 +18,22 @@ func NewRepository(db *pgxpool.Pool) Repository {
 	return &postgresRepository{db: db}
 }
 
-func (r *postgresRepository) GetPlanByUserPlanID(ctx context.Context, id int) (*Plan, error) {
+func (r *postgresRepository) GetPlanByUserID(ctx context.Context, id int) (*Plan, error) {
+
+	user, err := r.GetByID(ctx, id)
+	if err != nil {
+		return &Plan{}, fmt.Errorf("faild to get plan %s", err)
+	}
 
 	var p Plan
-
-	err := r.db.QueryRow(ctx, `
-	SELECT id, name, max_projects, max_members, max_daily_logs, retention_days
+	err = r.db.QueryRow(ctx, `
+		SELECT id, name, max_projects, max_members, max_daily_logs, retention_days
  	FROM plans 
 	WHERE id = $1
-	`, id)
+	`, user.PlanID).Scan(&p.ID, &p.Name, &p.MaxProjects, &p.MaxMemebers, &p.MaxDailyLogs, &p.RetentionDays)
 
 	if err != nil {
-		return nil, fmt.Errorf("faild to get plan %s", err)
+		return &Plan{}, fmt.Errorf("faild to get plan %s", err)
 	}
 
 	return &p, nil
@@ -76,10 +80,10 @@ func (r *postgresRepository) GetByID(ctx context.Context, id int) (*User, error)
 	var u User
 
 	err := r.db.QueryRow(ctx,
-		`SELECT id, firstname, lastname, email, password_hash, plan, is_verified 
+		`SELECT id, firstname, lastname, email, password_hash, plan_id, is_verified 
          FROM users WHERE id = $1`,
 		id,
-	).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.PasswordHash, &u.Plan, &u.IsVerified)
+	).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.PasswordHash, &u.PlanID, &u.IsVerified)
 
 	if err != nil {
 		return &u, errors.New("user not found")

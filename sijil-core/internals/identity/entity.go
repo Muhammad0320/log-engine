@@ -15,7 +15,6 @@ type User struct {
 	ResetToken               *string    `json:"-"`
 	ResetTokenExpires        *time.Time `json:"-"`
 	AvatarURL                string     `json:"avatar_url"`
-	Plan                     string     `json:"plan"`
 	CreatedAt                time.Time  `json:"created_at"`
 }
 

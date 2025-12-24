@@ -30,6 +30,7 @@ type Server struct {
 	jwtSecret    string
 	// -----
 	Router          *gin.Engine
+	identityRepo    *identity.Repository
 	identityHandler *identity.Handler
 	projectHandler  *projects.Handler
 }
@@ -42,6 +43,7 @@ func NewServer(db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.
 		authCache:    authCache,
 		jwtSecret:    jwtSecret,
 
+		identityRepo:    handler.IdentityRepo,
 		identityHandler: handler.Identity,
 		projectHandler:  handler.Projects,
 	}
