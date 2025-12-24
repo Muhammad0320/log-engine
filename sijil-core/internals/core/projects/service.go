@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"sijil-core/internals/auth"
-	"sijil-core/internals/core/domain"
 	"sijil-core/internals/database"
 	"sijil-core/internals/utils"
 )
@@ -32,11 +31,17 @@ type CreateProjectResponse struct {
 	APISecret string `json:"api_secret"`
 }
 
-func (s *Service) CreateProject(ctx context.Context, userID int, req CreateProjectRequest, plan *domain.Plan, limits database.PlanLimits) (*CreateProjectResponse, error) {
+func (s *Service) CreateProject(ctx context.Context, userID int, req CreateProjectRequest) (*CreateProjectResponse, error) {
 	// 1. Check Plan Limits
+	planName, err := s.repo.GetUserPlan(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	limits := database.GetPlanLimits(planName)
 	count, _ := s.repo.CountProjects(ctx, userID)
 
-	if count >= plan.MaxProjects {
+	if count >= limits.MaxProject {
 		return nil, ErrLimitReached
 	}
 

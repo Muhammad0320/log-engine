@@ -3,6 +3,7 @@ package observability
 import (
 	"fmt"
 	"net/http"
+	"sijil-core/internals/core/domain"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -39,7 +40,7 @@ func (h *Handler) Search(c *gin.Context) {
 	userID := c.GetInt("userID") // Set by JWT Middleware
 	projectID, _ := strconv.Atoi(c.Query("project_id"))
 
-	plan := c.MustGet("plan").(*Plan)
+	plan := c.MustGet("plan").(*domain.Plan)
 
 	fmt.Println("plannn ---------------", plan)
 
