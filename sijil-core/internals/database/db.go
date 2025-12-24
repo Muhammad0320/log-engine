@@ -71,13 +71,25 @@ func CreateSchema(ctx context.Context, db *pgxpool.Pool) error {
 		max_members INT NOT NULL DEFAULT 1,
 		retention_days INT NOT NULL DEFAULT 3,
 		max_daily_logs BIGINT NOT NULL,
-		price_monthly DECIMAL(10, 2) NOT NULL
+		price_usd DECIMAL(10, 2) NOT NULL
 		);
 	`
 
 	_, err = db.Exec(ctx, createPlansTableSQL)
 	if err != nil {
 		return fmt.Errorf("failed to create plans table %w\n", err)
+	}
+
+	seedQuery := `
+    INSERT INTO plans (id, name, max_projects, max_members, max_daily_logs, retention_days, price_usd)
+    VALUES 
+        (1, 'Hobby', 1, 1, 10000, 3, 0.00),          -- Free, 10k logs/day
+        (2, 'Pro', 5, 10, 1000000, 14, 20.00),       -- $20, 1M logs/day (Solid for startups)
+        (3, 'Team', 40, 100, 100000000, 30, 100.00)  -- $100, High volume
+    ON CONFLICT (id) DO NOTHING;
+    `
+	if _, err := db.Exec(ctx, seedQuery); err != nil {
+		return fmt.Errorf("failed to seed plans table %w \n", err)
 	}
 
 	// Create user tables
