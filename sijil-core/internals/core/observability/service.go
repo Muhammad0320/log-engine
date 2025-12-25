@@ -48,11 +48,11 @@ func (s *Service) Ingest(ctx context.Context, projectID int, logs []LogEntry) er
 		dbLogs = append(dbLogs, database.LogEntry(l))
 	}
 
-	if err := s.engine.Wal.WriteBatch(dbLogs); err != nil {
-		ingest.RecordError()
-		ingest.RecordDropped(1)
-		return errors.New("durability failure")
-	}
+	// if err := s.engine.Wal.WriteBatch(dbLogs); err != nil {
+	// 	ingest.RecordError()
+	// 	ingest.RecordDropped(1)
+	// 	return errors.New("durability failure")
+	// }
 
 	// 3. Processing (Queue)
 	for _, l := range dbLogs {

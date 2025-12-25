@@ -1,7 +1,7 @@
 package observability
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 	"sijil-core/internals/core/domain"
 	"strconv"
@@ -22,8 +22,8 @@ func (h *Handler) Ingest(c *gin.Context) {
 	projectID := c.GetInt("projectID")
 
 	var logs []LogEntry
-	if err := c.ShouldBindJSON(&logs); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid log format"})
+	if err := json.NewDecoder(c.Request.Body).Decode(&logs); err != nil {
+		c.JSON(400, gin.H{"error": "bad log"})
 		return
 	}
 
@@ -41,8 +41,6 @@ func (h *Handler) Search(c *gin.Context) {
 	projectID, _ := strconv.Atoi(c.Query("project_id"))
 
 	plan := c.MustGet("plan").(*domain.Plan)
-
-	fmt.Println("plannn ---------------", plan)
 
 	if projectID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "project_id required"})

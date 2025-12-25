@@ -156,7 +156,7 @@ func (e *IngestionEngine) walJanitor(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			if len(e.LogQueue) == 0 {
-				if err := e.Wal.CleanupSafeSegments(20); err != nil {
+				if err := e.Wal.CleanupSafeSegments(4); err != nil {
 					log.Printf("⚠️ Wal cleanup failed: %v", err)
 				}
 			}
