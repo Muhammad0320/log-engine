@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"sijil-core/internals/auth"
 	"sijil-core/internals/core/identity"
+	"sijil-core/internals/core/observability"
 	"sijil-core/internals/core/projects"
 	"sijil-core/internals/database"
 	"sijil-core/internals/hub"
@@ -126,6 +127,10 @@ func main() {
 		log.Fatal("FATAL: JWT_SECRET environment variable is not set")
 	}
 
+	// -- Ingesting engine
+	engine := ingest.NewIngestionEngine(db, wal, h)
+	engine.Start(ctx)
+
 	mailer := func(email, subject, body string) error {
 		fmt.Printf("[Real mock] To %s | Token %s\n", email, body)
 		return nil
@@ -139,15 +144,17 @@ func main() {
 	projectService := projects.NewService(projectsRepo, mailer)
 	projectHandler := projects.NewHandler(projectService)
 
+	observabilityRepo := observability.NewRepository(db)
+	observabilityService := observability.NewService(observabilityRepo, projectsRepo, engine)
+	observabilityHandler := observability.NewHandler(observabilityService)
+
 	handlers := shared.Handlers{
-		IdentityRepo: identityRepo,
-		Identity:     identityHandler,
-		Projects:     projectHandler,
+		IdentityRepo:  identityRepo,
+		Identity:      identityHandler,
+		Projects:      projectHandler,
+		Observability: observabilityHandler,
 	}
 
-	// -- Ingesting engine
-	engine := ingest.NewIngestionEngine(db, wal, h)
-	engine.Start(ctx)
 	srv := server.NewServer(db, engine, h, authCache, jwtSecret, handlers)
 
 	httpServer := &http.Server{

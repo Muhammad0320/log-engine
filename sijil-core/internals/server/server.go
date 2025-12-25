@@ -8,6 +8,7 @@ import (
 	"os"
 	"sijil-core/internals/auth"
 	"sijil-core/internals/core/identity"
+	"sijil-core/internals/core/observability"
 	"sijil-core/internals/core/projects"
 	"sijil-core/internals/database"
 	"sijil-core/internals/hub"
@@ -29,10 +30,11 @@ type Server struct {
 	authCache    *auth.AuthCache
 	jwtSecret    string
 	// -----
-	Router          *gin.Engine
-	identityRepo    identity.Repository
-	identityHandler *identity.Handler
-	projectHandler  *projects.Handler
+	Router               *gin.Engine
+	identityRepo         identity.Repository
+	identityHandler      *identity.Handler
+	projectHandler       *projects.Handler
+	observabilityHandler *observability.Handler
 }
 
 func NewServer(db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.Hub, authCache *auth.AuthCache, jwtSecret string, handler shared.Handlers) *Server {
@@ -43,9 +45,10 @@ func NewServer(db *pgxpool.Pool, ingestEngine *ingest.IngestionEngine, hub *hub.
 		authCache:    authCache,
 		jwtSecret:    jwtSecret,
 
-		identityRepo:    handler.IdentityRepo,
-		projectHandler:  handler.Projects,
-		identityHandler: handler.Identity,
+		identityRepo:         handler.IdentityRepo,
+		identityHandler:      handler.Identity,
+		projectHandler:       handler.Projects,
+		observabilityHandler: handler.Observability,
 	}
 
 	router := gin.Default()
@@ -107,14 +110,14 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 		protected.GET("/projects/:id/members", s.projectHandler.GetMembers)
 
 		// Logs
-		protected.GET("logs", s.handleGetLogs)
+		protected.GET("logs", s.observabilityHandler.Ingest)
 		protected.GET("logs/stats", s.handleGetStats)
 		protected.GET("logs/summary", s.handleGetSummary)
 		protected.GET("logs/ws", s.handleWsLogic)
 	}
 
 	// For the Loading Dock (Agent route)
-	apiv1.POST("/logs", s.apiKeyAuthMiddleware(), s.handleLogIngest)
+	apiv1.POST("/logs", s.apiKeyAuthMiddleware(), s.observabilityHandler.Ingest)
 
 	adminGroup := router.Group("/debug", gin.BasicAuth(gin.Accounts{
 		os.Getenv("ADMIN_USER"): os.Getenv("ADMIN_PASS"),
