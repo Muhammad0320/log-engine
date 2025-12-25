@@ -1,7 +1,6 @@
 package observability
 
 import (
-	"encoding/json"
 	"net/http"
 	"sijil-core/internals/core/domain"
 	"strconv"
@@ -22,7 +21,7 @@ func (h *Handler) Ingest(c *gin.Context) {
 	projectID := c.GetInt("projectID")
 
 	var logs []LogEntry
-	if err := json.NewDecoder(c.Request.Body).Decode(&logs); err != nil {
+	if err := c.ShouldBindJSON(&logs); err != nil {
 		c.JSON(400, gin.H{"error": "bad log"})
 		return
 	}
