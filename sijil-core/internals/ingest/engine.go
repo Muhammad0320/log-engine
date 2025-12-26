@@ -16,10 +16,10 @@ import (
 )
 
 const (
-	BatchSize     = 2000
+	BatchSize     = 10_000
 	FlushInterval = 1 * time.Second
-	WorkerCount   = 50
-	QueueSize     = 50_000
+	WorkerCount   = 25
+	QueueSize     = 100_000
 )
 
 type IngestionEngine struct {
