@@ -110,7 +110,7 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 		protected.GET("/projects/:id/members", s.projectHandler.GetMembers)
 
 		// Logs
-		protected.GET("logs", s.observabilityHandler.Ingest)
+		protected.GET("logs", s.observabilityHandler.Search)
 		protected.GET("logs/stats", s.handleGetStats)
 		protected.GET("logs/summary", s.handleGetSummary)
 		protected.GET("logs/ws", s.handleWsLogic)
