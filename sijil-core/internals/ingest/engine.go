@@ -19,7 +19,7 @@ const (
 	BatchSize     = 10_000
 	FlushInterval = 1 * time.Second
 	WorkerCount   = 25
-	QueueSize     = 100_000
+	QueueSize     = 300_000
 )
 
 type IngestionEngine struct {

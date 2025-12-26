@@ -3,7 +3,6 @@ package observability
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sijil-core/internals/core/projects"
 	"sijil-core/internals/database"
 	"sijil-core/internals/ingest"
@@ -40,14 +39,8 @@ func (s *Service) ProcessAndQueue(ctx context.Context, projectID int, log *LogEn
 		log.Message = log.Message[:10000] + "..."
 	}
 
-	start := time.Now() // START TIMER
-
 	s.engine.LogQueue <- database.LogEntry(*log)
 
-	duration := time.Since(start) // STOP TIMER
-	if duration > 100*time.Millisecond {
-		fmt.Printf("⚠️ Queue Blocked for %v | Queue is Full!\n", duration)
-	}
 	ingest.RecordQueued(1)
 }
 
