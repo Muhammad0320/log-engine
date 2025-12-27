@@ -239,9 +239,9 @@ func (w *WAL) CleanupSafeSegments(retainCount int) error {
 	}
 
 	for _, e := range entries {
-		if strings.HasPrefix(e.Name(), "segment-") && strings.HasSuffix(e.Name(), ".log") {
+		if strings.HasPrefix(e.Name(), "segment-") && strings.HasSuffix(e.Name(), ".wal") {
 			var seq int
-			_, err := fmt.Sscanf(e.Name(), "segment-%d.log", &seq)
+			_, err := fmt.Sscanf(e.Name(), "segment-%d.wal", &seq)
 			if err == nil && seq < safeThreshold {
 
 				path := filepath.Join(w.dir, e.Name())

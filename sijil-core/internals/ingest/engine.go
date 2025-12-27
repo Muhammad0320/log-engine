@@ -170,16 +170,14 @@ func (e *IngestionEngine) flush(ctx context.Context, batch []database.LogEntry) 
 func (e *IngestionEngine) walJanitor(ctx context.Context) {
 	defer e.wg.Done()
 
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			if len(e.LogQueue) == 0 {
-				if err := e.Wal.CleanupSafeSegments(4); err != nil {
-					log.Printf("⚠️ Wal cleanup failed: %v", err)
-				}
+			if err := e.Wal.CleanupSafeSegments(4); err != nil {
+				log.Printf("⚠️ Wal cleanup failed: %v", err)
 			}
 		case <-ctx.Done():
 			return
