@@ -29,6 +29,9 @@ func (h *Handler) Ingest(c *gin.Context) {
 		return
 	}
 
+	const MicroBatchSize = 1_000
+	batch := make([]LogEntry, 0, MicroBatchSize)
+
 	// If it's an array '[', we loop until we hit ']'
 	if delim, ok := token.(json.Delim); ok && delim == '[' {
 		for decoder.More() {
@@ -40,7 +43,18 @@ func (h *Handler) Ingest(c *gin.Context) {
 				return
 			}
 
-			h.service.ProcessAndQueue(c.Request.Context(), projectID, &log)
+			batch = append(batch, log)
+
+			if len(batch) >= MicroBatchSize {
+
+				h.service.ProcessAndQueue(c.Request.Context(), projectID, batch)
+				batch = make([]LogEntry, 0, MicroBatchSize)
+			}
+
+		}
+
+		if len(batch) > 0 {
+			h.service.ProcessAndQueue(c.Request.Context(), projectID, batch)
 		}
 
 		// Consuming the closing ']'

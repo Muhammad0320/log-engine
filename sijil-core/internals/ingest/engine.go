@@ -19,7 +19,7 @@ const (
 	BatchSize     = 5_000
 	FlushInterval = 1 * time.Second
 	WorkerCount   = 25
-	QueueSize     = 1_000
+	QueueSize     = 10_000
 )
 
 type IngestionEngine struct {
@@ -56,6 +56,22 @@ func (e *IngestionEngine) Start(ctx context.Context) {
 		go e.worker(ctx, i)
 	}
 
+	// Background WAL syncer
+	e.wg.Add(1)
+	go func() {
+		defer e.wg.Done()
+		ticker := time.NewTicker(500 * time.Millisecond)
+		for {
+			select {
+			case <-ticker.C:
+				e.Wal.Sync()
+			case <-ctx.Done():
+				return
+
+			}
+		}
+	}()
+
 }
 
 func (e *IngestionEngine) Shutdown() {
@@ -76,8 +92,13 @@ func (e *IngestionEngine) worker(ctx context.Context, id int) {
 	for {
 
 		select {
-		case entry := <-e.LogQueue:
-			batch = append(batch, entry)
+		case microBatch := <-e.LogQueue:
+
+			if err := e.Wal.WriteBatch(microBatch); err != nil {
+				fmt.Printf("failed to sync to buffered wal %s \n", err)
+			}
+
+			batch = append(batch, microBatch...)
 
 			if len(batch) >= BatchSize {
 				WorkerWake()
@@ -107,8 +128,8 @@ func (e *IngestionEngine) worker(ctx context.Context, id int) {
 
 func (e *IngestionEngine) safeFlush(ctx context.Context, batch []database.LogEntry) {
 
-	atomic.AddInt32(&e.activeWorkers, 1)  // "I'm active"
-	atomic.AddInt32(&e.activeWorkers, -1) // "I'm Done"
+	atomic.AddInt32(&e.activeWorkers, 1)        // "I'm active"
+	defer atomic.AddInt32(&e.activeWorkers, -1) // "I'm Done"
 
 	e.flush(ctx, batch)
 

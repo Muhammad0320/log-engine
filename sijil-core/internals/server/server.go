@@ -186,38 +186,6 @@ func (s *Server) handleResetPassword(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "password reset successfully"})
 }
 
-func (s *Server) handleLogIngest(c *gin.Context) {
-	ProjectID := c.GetInt("projectID")
-
-	var logEntries []database.LogEntry
-	if err := c.BindJSON(&logEntries); err != nil {
-		c.JSON(400, gin.H{"error": "bad request; expected an array"})
-		return
-	}
-
-	// Enrichments
-	for i := range logEntries {
-		logEntries[i].ProjectID = ProjectID
-		if logEntries[i].Timestamp.IsZero() {
-			logEntries[i].Timestamp = time.Now()
-		}
-	}
-
-	//  WAL (DURABILITY)
-	if err := s.ingestEngine.Wal.WriteBatch(logEntries); err != nil {
-		ingest.RecordError()
-		ingest.RecordDropped(1)
-		c.JSON(500, gin.H{"error": "durability failure"})
-		return
-	}
-
-	for _, entry := range logEntries {
-		s.ingestEngine.LogQueue <- entry
-		ingest.RecordQueued(1)
-	}
-	c.JSON(202, gin.H{"message": "log received!"})
-}
-
 func (s *Server) handleGetLogs(c *gin.Context) {
 
 	userID, exists := c.Get("userID")

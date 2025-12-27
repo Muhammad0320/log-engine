@@ -134,6 +134,7 @@ func (w *WAL) Sync() error {
 		return w.activeFile.Sync()
 	}
 	return nil
+
 }
 
 // rotate closes the current file and opens the next sequence
