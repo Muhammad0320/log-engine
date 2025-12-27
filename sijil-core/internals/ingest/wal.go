@@ -58,7 +58,7 @@ func (w *WAL) findLastSegment() (int, error) {
 	for _, e := range entries {
 		if strings.HasPrefix(e.Name(), "segment-") && strings.HasSuffix(e.Name(), ".log") {
 			var seq int
-			_, err := fmt.Sscanf(e.Name(), "segment-%d.log", &seq)
+			_, err := fmt.Sscanf(e.Name(), "segment-%d.wal", &seq)
 			if err == nil && seq > maxSeq {
 				maxSeq = seq
 			}
@@ -74,7 +74,7 @@ func (w *WAL) findLastSegment() (int, error) {
 
 func (w *WAL) openSegment(seq int) error {
 
-	filename := filepath.Join(w.dir, fmt.Sprintf("segment-%06d", seq))
+	filename := filepath.Join(w.dir, fmt.Sprintf("segment-%06d.wal", seq))
 
 	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 	if err != nil {
@@ -224,6 +224,8 @@ func (w *WAL) Close() error {
 	return nil
 }
 
+// wal.go
+
 func (w *WAL) CleanupSafeSegments(retainCount int) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -233,23 +235,33 @@ func (w *WAL) CleanupSafeSegments(retainCount int) error {
 		return err
 	}
 
+	// 1. Log the state of the sequence
 	safeThreshold := w.activeSeq - retainCount
+
 	if safeThreshold < 1 {
 		return nil
 	}
 
 	for _, e := range entries {
-		if strings.HasPrefix(e.Name(), "segment-") && strings.HasSuffix(e.Name(), ".wal") {
-			var seq int
-			_, err := fmt.Sscanf(e.Name(), "segment-%d.wal", &seq)
-			if err == nil && seq < safeThreshold {
+		name := e.Name()
 
-				path := filepath.Join(w.dir, e.Name())
-				if err := os.Remove(path); err != nil {
-					fmt.Printf("⚠️ Failed to remove old segment %s: %v\n", e.Name(), err)
-				} else {
-					fmt.Printf("🧹 Deleted old segment: %s\n", e.Name())
-				}
+		var seq int
+		// 3. Try parsing the number
+		_, err := fmt.Sscanf(name, "segment-%d.wal", &seq)
+
+		if err != nil {
+			fmt.Printf("⚠️  Parsing Failed for '%s': %v\n", name, err)
+			continue
+		}
+
+		// 4. Check the math
+		if seq < safeThreshold {
+
+			path := filepath.Join(w.dir, name)
+			if err := os.Remove(path); err != nil {
+				fmt.Printf("❌ Failed to remove %s: %v\n", name, err)
+			} else {
+				fmt.Printf("✅ Deleted: %s\n", name)
 			}
 		}
 	}
