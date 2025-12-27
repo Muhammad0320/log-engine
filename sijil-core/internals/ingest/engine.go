@@ -19,14 +19,14 @@ const (
 	BatchSize     = 5_000
 	FlushInterval = 1 * time.Second
 	WorkerCount   = 25
-	QueueSize     = 500_000
+	QueueSize     = 1_000
 )
 
 type IngestionEngine struct {
 	db            *pgxpool.Pool
 	Wal           *WAL
 	hub           *hub.Hub
-	LogQueue      chan database.LogEntry
+	LogQueue      chan []database.LogEntry
 	wg            sync.WaitGroup
 	activeWorkers int32
 }
@@ -36,7 +36,7 @@ func NewIngestionEngine(db *pgxpool.Pool, wal *WAL, h *hub.Hub) *IngestionEngine
 		db:       db,
 		Wal:      wal,
 		hub:      h,
-		LogQueue: make(chan database.LogEntry, QueueSize),
+		LogQueue: make(chan []database.LogEntry, QueueSize),
 	}
 }
 

@@ -1,6 +1,7 @@
 package ingest
 
 import (
+	"bufio"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -23,6 +24,7 @@ type WAL struct {
 	activeFile  *os.File
 	activeSeq   int
 	currentSize int64
+	bufWriter   *bufio.Writer
 }
 
 func NewWal(dir string) (*WAL, error) {
@@ -81,6 +83,7 @@ func (w *WAL) openSegment(seq int) error {
 
 	stat, _ := f.Stat()
 	w.activeFile = f
+	w.bufWriter = bufio.NewWriterSize(f, 64*1024)
 	w.activeSeq = seq
 	w.currentSize = stat.Size()
 
@@ -107,20 +110,30 @@ func (w *WAL) WriteBatch(batch []database.LogEntry) error {
 
 		// Write Length Prefix (for easy reading later)
 		length := int32(len(data))
-		if err := binary.Write(w.activeFile, binary.LittleEndian, length); err != nil {
+		if err := binary.Write(w.bufWriter, binary.LittleEndian, length); err != nil {
 			return err
 		}
 
 		// Write Data
-		n, err := w.activeFile.Write(data)
+		_, err = w.bufWriter.Write(data)
 		if err != nil {
 			return err
 		}
 
-		w.currentSize += int64(4 + n)
+		w.currentSize += int64(4 + len(data))
 	}
 
-	return w.activeFile.Sync()
+	return w.bufWriter.Flush()
+}
+
+func (w *WAL) Sync() error {
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.activeFile != nil {
+		return w.activeFile.Sync()
+	}
+	return nil
 }
 
 // rotate closes the current file and opens the next sequence
