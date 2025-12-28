@@ -131,6 +131,8 @@ func (w *WAL) WriteBatch(batch []database.LogEntry) error {
 			return err
 		}
 
+		fmt.Println("active seeqqqqqqqq", w.activeSeq)
+
 		entry.SegmentID = w.activeSeq
 
 		w.currentSize += int64(4 + len(data))
@@ -266,6 +268,8 @@ func (w *WAL) Reset() error {
 func (w *WAL) CleanupUntil(maxSeqToDelete int) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+
+	fmt.Println("Were you even called")
 
 	entries, err := os.ReadDir(w.dir)
 	if err != nil {
