@@ -11,12 +11,23 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
 	MaxSegmentSize = 10 * 1024 * 1024
 	WalDir         = "wal_data"
 )
+
+type LogEntry struct {
+	Timestamp time.Time              `json:"timestamp"`
+	Level     string                 `json:"level"`
+	Message   string                 `json:"message"`
+	Service   string                 `json:"service"`
+	ProjectID int                    `json:"-"`
+	Data      map[string]interface{} `json:"data,omitempty"`
+	SegmentID int                    `json:"-"`
+}
 
 type WAL struct {
 	dir         string
@@ -292,4 +303,30 @@ func (w *WAL) Reset() error {
 
 	// 3. Start fresh at segment 1
 	return w.openSegment(1)
+}
+
+func (w *WAL) CleanupUntil(maxSeqToDelete int) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	entries, err := os.ReadDir(w.dir)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("🧹 Janitor Waking Up: Safe to delete up to Segment %d\n", maxSeqToDelete)
+
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), "segment-") && strings.HasSuffix(e.Name(), ".wal") {
+			var seq int
+			fmt.Sscanf(e.Name(), "segment-%d.wal", &seq)
+
+			if seq <= maxSeqToDelete {
+				path := filepath.Join(w.dir, e.Name())
+				os.Remove(path)
+				fmt.Printf("🗑️ Deterministic Cleanup: Deleted committed segment %d\n", seq)
+			}
+		}
+	}
+	return nil
 }

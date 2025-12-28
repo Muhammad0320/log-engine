@@ -192,14 +192,27 @@ func (e *IngestionEngine) flush(ctx context.Context, batch []database.LogEntry) 
 func (e *IngestionEngine) walJanitor(ctx context.Context) {
 	defer e.wg.Done()
 
-	ticker := time.NewTicker(10 * time.Second)
+	var maxSafeSeq int
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for {
 		select {
+		// EVENT: When flush succeeeds, update out knowlege
+		case seq := <-e.CommitedSeq:
+			if seq > maxSafeSeq {
+				maxSafeSeq = seq
+			}
+		// TIME: Act on that knowlwdge
 		case <-ticker.C:
-			if err := e.Wal.CleanupSafeSegments(3); err != nil {
-				log.Printf("⚠️ Wal cleanup failed: %v", err)
+
+			threshold := maxSafeSeq
+			if maxSafeSeq >= e.Wal.activeSeq {
+				threshold = e.Wal.activeSeq - 1
+			}
+
+			if threshold > 0 {
+				e.Wal.CleanupUntil(threshold)
 			}
 		case <-ctx.Done():
 			return
