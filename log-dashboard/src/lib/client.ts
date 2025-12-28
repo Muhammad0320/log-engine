@@ -12,7 +12,7 @@ export async function fetchClient<T>(
 ): Promise<T> {
   const headers = {
     "Content-Type": "application/json",
-    ...(token ? { Authorizatiton: `Bearer ${token}` } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
 
