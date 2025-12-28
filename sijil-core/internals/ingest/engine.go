@@ -31,14 +31,16 @@ type IngestionEngine struct {
 	LogQueue      chan []database.LogEntry
 	wg            sync.WaitGroup
 	activeWorkers int32
+	CommitedSeq   chan int
 }
 
 func NewIngestionEngine(db *pgxpool.Pool, wal *WAL, h *hub.Hub) *IngestionEngine {
 	return &IngestionEngine{
-		db:       db,
-		Wal:      wal,
-		hub:      h,
-		LogQueue: make(chan []database.LogEntry, QueueSize),
+		db:          db,
+		Wal:         wal,
+		hub:         h,
+		LogQueue:    make(chan []database.LogEntry, QueueSize),
+		CommitedSeq: make(chan int, 100),
 	}
 }
 
@@ -163,6 +165,24 @@ func (e *IngestionEngine) flush(ctx context.Context, batch []database.LogEntry) 
 	}
 
 	RecordFlushed(len(batch))
+
+	// The Janitor Logic
+	maxSeq := 0
+	for _, log := range batch {
+		if log.SegmentID > maxSeq {
+			maxSeq = log.SegmentID
+		}
+	}
+
+	if maxSeq > 0 {
+
+		select {
+		case e.CommitedSeq <- maxSeq:
+		default:
+
+		}
+	}
+	// Ends here
 
 	for _, row := range batch {
 		e.hub.BroadcastLog(row)
