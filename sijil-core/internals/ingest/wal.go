@@ -237,48 +237,6 @@ func (w *WAL) Close() error {
 	return nil
 }
 
-func (w *WAL) CleanupSafeSegments(retainCount int) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	entries, err := os.ReadDir(w.dir)
-	if err != nil {
-		return err
-	}
-
-	// 1. Log the state of the sequence
-	safeThreshold := w.activeSeq - retainCount
-
-	if safeThreshold < 1 {
-		return nil
-	}
-
-	for _, e := range entries {
-		name := e.Name()
-
-		var seq int
-		// 3. Try parsing the number
-		_, err := fmt.Sscanf(name, "segment-%d.wal", &seq)
-
-		if err != nil {
-			fmt.Printf("⚠️  Parsing Failed for '%s': %v\n", name, err)
-			continue
-		}
-
-		// 4. Check the math
-		if seq < safeThreshold {
-
-			path := filepath.Join(w.dir, name)
-			if err := os.Remove(path); err != nil {
-				fmt.Printf("❌ Failed to remove %s: %v\n", name, err)
-			} else {
-				fmt.Printf("✅ Deleted: %s\n", name)
-			}
-		}
-	}
-	return nil
-}
-
 func (w *WAL) Reset() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
