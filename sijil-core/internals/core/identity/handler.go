@@ -1,9 +1,15 @@
 package identity
 
 import (
+	"fmt"
+	"image"
+	"image/jpeg"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nfnt/resize"
 )
 
 type Handler struct {
@@ -103,5 +109,51 @@ func (h *Handler) ResetPassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "password reset successfully"})
+
+}
+
+func (h *Handler) handleUploadAvatar(c *gin.Context) {
+
+	userID := c.GetInt("userID")
+
+	file, err := c.FormFile("avatar")
+	if err != nil {
+		c.JSON(400, gin.H{"error": "No file uploaded"})
+		return
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to read file"})
+		return
+	}
+	defer src.Close()
+
+	img, _, err := image.Decode(src)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Invalid image format. Use PNG  or JPEG"})
+		return
+	}
+
+	newImage := resize.Thumbnail(256, 256, img, resize.Lanczos3)
+
+	// Save to disk
+	os.MkdirAll("data/avatars", 0755)
+
+	filename := fmt.Sprintf("user-%d.jpg", userID)
+	outPath := filepath.Join("data/avatars", filename)
+
+	out, err := os.Create(outPath)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to save image"})
+		return
+	}
+	defer out.Close()
+
+	jpeg.Encode(out, newImage, &jpeg.Options{Quality: 75})
+
+	avatarUrl := fmt.Sprintf("/static/avatars/%s", filename)
+
+	c.JSON(200, gin.H{"data": avatarUrl})
 
 }

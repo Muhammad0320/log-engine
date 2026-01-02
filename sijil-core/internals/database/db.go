@@ -87,7 +87,7 @@ func CreateSchema(ctx context.Context, db *pgxpool.Pool) error {
     VALUES 
         (1, 'Hobby', 1, 1, 10000, 3, 0.00, 0.00),          -- Free, 10k logs/day
         (2, 'Pro', 10, 10, 1000000, 14, 20.00, 12500.00),       -- $20, 1M logs/day (Solid for startups)
-        (3, 'Team', 100, 100, 100000000, 30, 100.00, 95000.00)  -- $100, High volume
+        (3, 'Ultra', 100, 100, 25000000, 30, 100.00, 95000.00)  -- $100, High volume
     ON CONFLICT (id) DO NOTHING;
     `
 
