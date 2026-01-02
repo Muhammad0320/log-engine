@@ -727,7 +727,7 @@ func ResetPasswordByToken(ctx context.Context, db *pgxpool.Pool, tokenHash strin
 	return res.RowsAffected() > 0, nil
 }
 
-func UpgradeUserPlan(ctx context.Context, db *pgxpool.Pool, UserID, planID string) error {
+func UpgradeUserPlan(ctx context.Context, db *pgxpool.Pool, UserID, planID int) error {
 
 	_, err := db.Exec(ctx, `
 		UPDATE users
