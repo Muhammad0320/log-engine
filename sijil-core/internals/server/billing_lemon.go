@@ -64,7 +64,7 @@ func (s *Server) handleLemonWebhook(c *gin.Context) {
 			planID = 3
 		}
 
-		if planID > 0 {
+		if planID > 1 {
 			err := database.UpgradeUserPlan(c.Request.Context(), s.db, event.Meta.CustomData.UserID, planID)
 			if err != nil {
 				c.Status(500)

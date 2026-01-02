@@ -62,11 +62,12 @@ func (s *Server) handlePayStackWebhook(c *gin.Context) {
 			planID = 3 // ultra
 		}
 
-		err := database.UpgradeUserPlan(c.Request.Context(), s.db, event.Data.Metadata.UserID, planID)
-
-		if err != nil {
-			c.Status(500)
-			return
+		if planID > 1 {
+			err := database.UpgradeUserPlan(c.Request.Context(), s.db, event.Data.Metadata.UserID, planID)
+			if err != nil {
+				c.Status(500)
+				return
+			}
 		}
 
 	}
