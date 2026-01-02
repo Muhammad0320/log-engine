@@ -571,9 +571,9 @@ export default function MarketingPage() {
           The Log Engine for <br />
           <Typewriter
             words={[
-              "Hyperspeed Ingestion.",
+              "90k Logs/Seconds.",
               "Realtime Debugging.",
-              "Scale & Durability.",
+              "Crash-Proof WAL.",
             ]}
           />
         </HeroTitle>
