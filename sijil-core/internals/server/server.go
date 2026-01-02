@@ -86,6 +86,8 @@ func (s *Server) registerRoutes(router *gin.Engine) {
 	// 	router.Use(s.DogFoodMiddleware())
 	// }
 
+	router.Static("/static/avatars", "./data/avatars")
+
 	apiv1 := router.Group("/api/v1")
 
 	authGroup := apiv1.Group("/auth")

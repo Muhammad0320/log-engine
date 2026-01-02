@@ -86,8 +86,8 @@ func CreateSchema(ctx context.Context, db *pgxpool.Pool) error {
     INSERT INTO plans (id, name, max_projects, max_members, max_daily_logs, retention_days, price_usd, price_ngn)
     VALUES 
         (1, 'Hobby', 1, 1, 10000, 3, 0.00, 0.00),          -- Free, 10k logs/day
-        (2, 'Pro', 5, 10, 1000000, 14, 20.00, 12500.00),       -- $20, 1M logs/day (Solid for startups)
-        (3, 'Team', 40, 100, 100000000, 30, 100.00, 85000.00)  -- $100, High volume
+        (2, 'Pro', 10, 10, 1000000, 14, 20.00, 12500.00),       -- $20, 1M logs/day (Solid for startups)
+        (3, 'Team', 100, 100, 100000000, 30, 100.00, 95000.00)  -- $100, High volume
     ON CONFLICT (id) DO NOTHING;
     `
 
