@@ -4,7 +4,7 @@ import { fetchClient } from "@/lib/client";
 import { getSession } from "@/lib/session";
 
 export interface LogStat {
-  time: Date;
+  time: string;
   count: number;
 }
 
@@ -90,7 +90,7 @@ export async function getLogStatAction(
     const rawStats = res.stats || [];
 
     const stats: LogStat[] = rawStats.map((s) => ({
-      time: new Date(s.time),
+      time: s.time,
       count: s.count,
     }));
 

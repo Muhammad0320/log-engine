@@ -386,7 +386,7 @@ func (s *Server) handleGetStats(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"stats": stats})
+	c.JSON(200, gin.H{"data": stats})
 }
 
 func (s *Server) handleGetSummary(c *gin.Context) {
@@ -409,7 +409,7 @@ func (s *Server) handleGetSummary(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"summary": summary})
+	c.JSON(200, gin.H{"data": summary})
 }
 
 func (s *Server) handleAddMember(c *gin.Context) {
