@@ -19,6 +19,7 @@ import { useDashboard } from "@/providers/DashboardProviders";
 import { LogEntry, Project } from "@/lib/types";
 import { getLogsAction } from "@/actions/logs";
 import KeyRevel from "@/components/features/projects/KeyReveal";
+import { useLiveMetrics } from "@/hooks/useLiveMetrics";
 
 // Helper for the header button
 const HeaderBtn = styled.button`
@@ -114,7 +115,7 @@ export default function DashboardClient({
 
   // --- Logic 1: Reset state
   useEffect(() => {
-    // Ruthless menthor
+    // Ruthless
     if (page !== 1) {
       setTimeout(() => {
         setPage(1);
@@ -179,6 +180,11 @@ export default function DashboardClient({
     selectedProjectId || 0,
     token
   );
+  const {
+    stats,
+    summary,
+    loading: metricsLoading,
+  } = useLiveMetrics(selectedProjectId, liveLogs);
   const lastProcessedRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -340,7 +346,7 @@ export default function DashboardClient({
             onAddClick={() => setModalState({ mode: "CREATE" })}
           />
         }
-        metrics={<SummaryCards projectId={selectedProjectId} token={token} />}
+        metrics={<SummaryCards data={summary} loading={metricsLoading} />}
         logs={
           <div
             style={{ display: "flex", flexDirection: "column", height: "100%" }}
@@ -404,7 +410,7 @@ export default function DashboardClient({
             </div>
           </div>
         }
-        charts={<VolumeChart projectId={selectedProjectId} token={token} />}
+        charts={<VolumeChart data={stats} loading={metricsLoading} />}
       />
       <Modal
         isOpen={isSettingsOpen}
