@@ -124,7 +124,7 @@ func TestRBAC_EndToEnd(t *testing.T) {
 	// We do this here so Step 4 doesn't fail on "Quota Exceeded" before hitting "Conflict"
 	// ----------------------------------------------------------------------
 	adminUser, _ := s.identityRepo.GetByEmail(context.Background(), "admin@test.com")
-	if err := s.identityService.UpgradePlan(context.Background(), adminUser.ID, "Pro"); err != nil {
+	if err := s.identityRepo.UpdateUserPlan(context.Background(), adminUser.ID, 2); err != nil {
 		t.Fatalf("Failed to force upgrade admin user: %v", err)
 	}
 	// ----------------------------------------------------------------------

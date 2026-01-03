@@ -54,15 +54,15 @@ func (s *Server) handlePayStackWebhook(c *gin.Context) {
 
 	// 3. Update the database
 	if event.Event == "charge.success" {
-		var planName string
+		var planID int
 		if event.Data.Amount == 12_500_00 {
-			planName = "Pro"
+			planID = 2
 		} else if event.Data.Amount == 95_000_00 {
-			planName = "Ultra"
+			planID = 3
 		}
 
-		if planName != "" {
-			err := s.identityService.UpgradePlan(c.Request.Context(), event.Data.Metadata.UserID, planName)
+		if planID > 1 {
+			err := s.identityRepo.UpdateUserPlan(c.Request.Context(), event.Data.Metadata.UserID, planID)
 			if err != nil {
 				c.Status(500)
 				return

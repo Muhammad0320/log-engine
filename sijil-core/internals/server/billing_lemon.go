@@ -54,17 +54,17 @@ func (s *Server) handleLemonWebhook(c *gin.Context) {
 
 	if event.Meta.EventName == "subscription_created" || event.Meta.EventName == "order_created" {
 
-		var planName string
+		var planID int
 		amount := event.Data.Attributes.Total
 
 		if amount >= 1900 && amount <= 2100 {
-			planName = "Pro"
+			planID = 2
 		} else if amount >= 9900 {
-			planName = "Ultra"
+			planID = 3
 		}
 
-		if planName != "" {
-			err := s.identityService.UpgradePlan(c.Request.Context(), event.Meta.CustomData.UserID, planName)
+		if planID > 1 {
+			err := s.identityRepo.UpdateUserPlan(c.Request.Context(), event.Meta.CustomData.UserID, planID)
 			if err != nil {
 				c.Status(500)
 				return
