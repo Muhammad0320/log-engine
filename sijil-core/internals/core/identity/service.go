@@ -39,12 +39,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, *U
 		VerificationTokenExpires: &expires,
 	}
 
-	id, err := s.repo.Create(ctx, u)
-	if err != nil {
-		return "", &User{}, err
-	}
-
-	user, err := s.repo.GetByID(ctx, id)
+	user, err := s.repo.Create(ctx, u)
 	if err != nil {
 		return "", &User{}, err
 	}
@@ -67,7 +62,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, *U
 
 	}()
 
-	token, err := auth.CreateJWT(s.jwtSecret, id)
+	token, err := auth.CreateJWT(s.jwtSecret, user.ID)
 
 	return token, user, err
 }

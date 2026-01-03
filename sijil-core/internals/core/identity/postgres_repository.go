@@ -64,24 +64,37 @@ func (r *postgresRepository) UpdateUserPlan(ctx context.Context, userID, planID 
 	return err
 }
 
-func (r *postgresRepository) Create(ctx context.Context, u *User) (int, error) {
-	var newUserID int
+func (r *postgresRepository) Create(ctx context.Context, u *User) (*User, error) {
+
+	var insertedUser User
+
 	err := r.db.QueryRow(ctx,
-		`INSERT INTO users (firstname, lastname, email, password_hash ,verification_token, verification_expires, plan_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+		`INSERT INTO users (firstname, lastname, email, password_hash, verification_token, verification_expires, plan_id) 
+     VALUES ($1, $2, $3, $4, $5, $6, $7) 
+     RETURNING *`, // Returns all columns from the new row
 		u.FirstName, u.LastName, u.Email, u.PasswordHash, u.VerificationToken, u.VerificationTokenExpires, 1,
-	).Scan(&newUserID)
+	).Scan(
+		&insertedUser.ID,
+		&insertedUser.FirstName,
+		&insertedUser.LastName,
+		&insertedUser.Email,
+		&insertedUser.PasswordHash,
+		&insertedUser.VerificationToken,
+		&insertedUser.PlanID,
+		&insertedUser.CreatedAt, // Assuming you have these standard fields
+	)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
-				return 0, errors.New("email already exists")
+				return &User{}, errors.New("email already exists")
 			}
 		}
-		return 0, fmt.Errorf("failed to create user: %w", err)
+		return &User{}, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return newUserID, nil
+	return &insertedUser, nil
 }
 
 func (r *postgresRepository) GetByEmail(ctx context.Context, email string) (*User, error) {

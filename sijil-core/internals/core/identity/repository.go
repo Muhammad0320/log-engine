@@ -7,7 +7,7 @@ import (
 )
 
 type Repository interface {
-	Create(ctx context.Context, u *User) (int, error)
+	Create(ctx context.Context, u *User) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, id int) (*User, error)
 	GetPlanByUserID(ctx context.Context, id int) (*domain.Plan, error)
