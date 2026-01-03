@@ -1,6 +1,6 @@
 "use client";
 
-import styled, { keyframes } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { ArrowRight, Database, Zap, Shield, Cpu, Check } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image"; // Import Image for your assets
@@ -27,6 +27,22 @@ const float = keyframes`
 const scanline = keyframes`
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100%); }
+`;
+
+const Title = styled.h2`
+  font-size: 48px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 16px;
+  letter-spacing: -1px;
+`;
+
+const Subtitle = styled.p`
+  font-size: 18px;
+  color: #8b949e;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
 `;
 
 // --- STYLES ---
@@ -130,16 +146,6 @@ const Pill = styled.div`
   box-shadow: 0 0 20px rgba(88, 166, 255, 0.1);
 `;
 
-const Subtitle = styled.p`
-  font-size: 20px;
-  color: #8b949e;
-  text-align: center;
-  max-width: 640px;
-  margin-bottom: 40px;
-  line-height: 1.6;
-  z-index: 1;
-`;
-
 const ButtonGroup = styled.div`
   display: flex;
   gap: 16px;
@@ -208,61 +214,51 @@ const BentoSection = styled.section`
   margin: 0 auto;
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
-`;
 
-const Card = styled.div<{ $colSpan?: number; $highlight?: string }>`
-  background: rgba(13, 17, 23, 0.6);
-  border: 1px solid rgba(48, 54, 61, 0.6);
-  border-radius: 24px;
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  grid-column: span ${(p) => p.$colSpan || 1};
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(12px);
 
-  /* Spotlight */
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(
-      800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      rgba(255, 255, 255, 0.06),
-      transparent 40%
-    );
-    z-index: 0;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  &:hover::before {
-    opacity: 1;
-  }
-  &:hover {
-    border-color: ${(p) => p.$highlight || "#58a6ff"};
-    transform: translateY(-4px);
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
-  }
-  @media (max-width: 1024px) {
-    grid-column: span 1 !important;
-  }
-`;
+// const Card = styled.div<{ $colSpan?: number; $highlight?: string }>`
+//   background: rgba(13, 17, 23, 0.6);
+//   border: 1px solid rgba(48, 54, 61, 0.6);
+//   border-radius: 24px;
+//   padding: 32px;
+//   display: flex;
+//   flex-direction: column;
+//   justify-content: space-between;
+//   grid-column: span ${(p) => p.$colSpan || 1};
+//   position: relative;
+//   overflow: hidden;
+//   transition: all 0.3s ease;
+//   backdrop-filter: blur(12px);
+
+//   /* Spotlight */
+//   &::before {
+//     content: "";
+//     position: absolute;
+//     top: 0;
+//     left: 0;
+//     right: 0;
+//     bottom: 0;
+//     background: radial-gradient(
+//       800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+//       rgba(255, 255, 255, 0.06),
+//       transparent 40%
+//     );
+//     z-index: 0;
+//     opacity: 0;
+//     transition: opacity 0.3s;
+//   }
+//   &:hover::before {
+//     opacity: 1;
+//   }
+//   &:hover {
+//     border-color: ${(p) => p.$highlight || "#58a6ff"};
+//     transform: translateY(-4px);
+//     box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+//   }
+//   @media (max-width: 1024px) {
+//     grid-column: span 1 !important;
+//   }
+// `;
 
 const CardContent = styled.div`
   position: relative;
@@ -421,36 +417,6 @@ const PriceCard = styled.div<{ $featured?: boolean }>`
   `}
 `;
 
-const Price = styled.div`
-  font-size: 36px;
-  font-weight: 700;
-  color: #fff;
-  margin: 16px 0;
-  font-family: var(--font-geist-mono);
-
-  span {
-    font-size: 16px;
-    color: #8b949e;
-    font-weight: 400;
-  }
-`;
-
-const FeatureList = styled.ul`
-  list-style: none;
-  margin: 24px 0 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`;
-
-const FeatureItem = styled.li`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #c9d1d9;
-  font-size: 14px;
-`;
-
 const FloatingVisual = styled.div`
   position: absolute;
   width: 100%;
@@ -511,6 +477,231 @@ const SoftImage = styled.div`
   pointer-events: none;
 `;
 
+// --- TOGGLES ---
+const ControlsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 64px;
+`;
+
+const ToggleGroup = styled.div`
+  background: #161b22;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+  display: flex;
+  gap: 4px;
+`;
+
+const ToggleButton = styled.button<{ $active: boolean; $color?: string }>`
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  background: ${(p) => (p.$active ? (p.$color || "#21262d") : "transparent")};
+  color: ${(p) => (p.$active ? "#fff" : "#8b949e")};
+  
+  &:hover {
+    color: #fff;
+  }
+`;
+
+const AnnualSwitch = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+`;
+
+const SwitchTrack = styled.div<{ $active: boolean }>`
+  width: 48px;
+  height: 24px;
+  background: ${(p) => (p.$active ? "#238636" : "#30363d")};
+  border-radius: 99px;
+  position: relative;
+  transition: background 0.2s;
+`;
+
+const SwitchThumb = styled.div<{ $active: boolean }>`
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transform: translateX(${(p) => (p.$active ? "24px" : "0")});
+  transition: transform 0.2s;
+`;
+
+// --- PRICING CARDS ---
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+`;
+
+const Card = styled.div<{ $highlight?: boolean; $ultra?: boolean }>`
+  background: ${(p) => (p.$highlight ? "#0d1117" : "#161b22")};
+  border: 1px solid ${(p) => (p.$highlight ? "#58a6ff" : "#30363d")};
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  
+  ${(p) =>
+    p.$highlight &&
+    css`
+      box-shadow: 0 0 30px rgba(88, 166, 255, 0.1);
+    `}
+
+  ${(p) =>
+    p.$ultra &&
+    css`
+      /* The Golden Ultra Effect */
+      border: 1px solid transparent;
+      background: linear-gradient(#0d1117, #0d1117) padding-box,
+                  linear-gradient(45deg, #ffd700, #ffaa00, #ffd700) border-box;
+      
+      &::before {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border-radius: 16px;
+        background: linear-gradient(45deg, #ffd700, #ffaa00, #ffd700);
+        z-index: -1;
+        opacity: 0.3;
+        filter: blur(10px);
+      }
+    `}
+`;
+
+const Badge = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #58a6ff;
+  color: #0d1117;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-bottom-left-radius: 12px;
+  border-top-right-radius: 12px;
+`;
+
+const PlanName = styled.h3<{ $color?: string }>`
+  font-size: 20px;
+  font-weight: 700;
+  color: ${(p) => p.$color || "#fff"};
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const Price = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 24px 0;
+`;
+
+const Amount = styled.span`
+  font-size: 42px;
+  font-weight: 800;
+  color: #fff;
+  font-family: var(--font-geist-mono);
+`;
+
+const Period = styled.span`
+  color: #8b949e;
+`;
+
+const CTA = styled.a<{ $variant: "default" | "primary" | "gold" }>`
+  display: block;
+  text-align: center;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-bottom: 32px;
+  transition: opacity 0.2s;
+  cursor: pointer;
+
+  ${(p) =>
+    p.$variant === "default" &&
+    css`
+      background: #21262d;
+      color: #fff;
+      border: 1px solid #30363d;
+      &:hover { background: #30363d; }
+    `}
+
+  ${(p) =>
+    p.$variant === "primary" &&
+    css`
+      background: #58a6ff;
+      color: #0d1117;
+      &:hover { opacity: 0.9; }
+    `}
+
+  ${(p) =>
+    p.$variant === "gold" &&
+    css`
+      background: linear-gradient(to right, #ffd700, #ffaa00);
+      color: #0d1117;
+      &:hover { opacity: 0.9; }
+    `}
+`;
+
+const FeatureList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const FeatureItem = styled.li`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #c9d1d9;
+`;
+
+const CheckIcon = styled.div`
+  width: 18px;
+  height: 18px;
+  background: #238636;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+`;
+
+
+const Section = styled.section`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 24px;
+`;
+
+const Header = styled.div`
+  text-align: center;
+  margin-bottom: 64px;
+`;
+// --- COMPONENT ---
+
 function Typewriter({ words }: { words: string[] }) {
   const [index, setIndex] = useState(0);
   const [subIndex, setSubIndex] = useState(0);
@@ -538,6 +729,8 @@ function Typewriter({ words }: { words: string[] }) {
     return () => clearTimeout(timeout);
   }, [subIndex, index, reverse, words]);
 
+
+
   return (
     <Highlight>
       {words[index].substring(0, subIndex)}
@@ -557,6 +750,23 @@ export default function MarketingPage() {
       htmlCard.style.setProperty("--mouse-x", `${x}px`);
       htmlCard.style.setProperty("--mouse-y", `${y}px`);
     });
+  };
+
+  const [isAnnual, setIsAnnual] = useState(true);
+  const [currency, setCurrency] = useState<"USD" | "NGN">("USD");
+
+  const rates = {
+    usd: { pro: 20, ultra: 100 },
+    ngn: { pro: 12500, ultra: 95000 }
+  };
+
+  const currentRate = currency === "USD" ? rates.usd : rates.ngn;
+  const symbol = currency === "USD" ? "$" : "₦";
+
+  const calculatePrice = (basePrice: number) => {
+    if (!isAnnual) return basePrice.toLocaleString();
+    const annualPrice = basePrice * 10; // 2 Months Free
+    return (annualPrice / 12).toLocaleString(undefined, { maximumFractionDigits: 0 });
   };
 
   return (
@@ -839,108 +1049,123 @@ export default function MarketingPage() {
         </BarContainer>
       </ComparisonSection>
 
-      <PricingSection id="pricing">
-        <SectionHeader>
-          <h2>Transparent Pricing</h2>
-          <p>Start small, scale infinitely.</p>
-        </SectionHeader>
+<Section>
+        <Header>
+          <Title>Simple, transparent pricing.</Title>
+          <Subtitle>
+            Self-hosted power with managed conveni&apos;ence. 
+            Stop paying for data ingestion you dont use.
+          </Subtitle>
+        </Header>
 
-        <PricingGrid>
-          {/* Free Plan */}
-          <PriceCard>
-            <CardTitle>Developer</CardTitle>
+        <ControlsContainer>
+          <ToggleGroup>
+            <ToggleButton 
+              $active={currency === "USD"} 
+              onClick={() => setCurrency("USD")}
+            >
+              🇺🇸 USD
+            </ToggleButton>
+            <ToggleButton 
+              $active={currency === "NGN"} 
+              $color="#008751"
+              onClick={() => setCurrency("NGN")}
+            >
+              🇳🇬 NGN
+            </ToggleButton>
+          </ToggleGroup>
+
+          <AnnualSwitch onClick={() => setIsAnnual(!isAnnual)}>
+            <span style={{ color: !isAnnual ? "#fff" : "#8b949e", fontSize: 14 }}>Monthly</span>
+            <SwitchTrack $active={isAnnual}>
+              <SwitchThumb $active={isAnnual} />
+            </SwitchTrack>
+            <span style={{ color: isAnnual ? "#fff" : "#8b949e", fontSize: 14 }}>
+              Yearly <span style={{ color: "#238636", fontWeight: "bold" }}>(2 months free)</span>
+            </span>
+          </AnnualSwitch>
+        </ControlsContainer>
+
+        <Grid>
+          {/* HOBBY CARD */}
+          <Card>
+            <PlanName>Hobby</PlanName>
+            <p style={{ fontSize: 13, color: "#8b949e" }}>For side projects.</p>
             <Price>
-              $0<span>/mo</span>
+              <Amount>Free</Amount>
             </Price>
-            <CardText>For side projects and experiments.</CardText>
+            <Link href="/register" passHref legacyBehavior>
+                <CTA $variant="default">Get Started</CTA>
+            </Link>
             <FeatureList>
-              <FeatureItem>
-                <Check size={16} color="#2ecc71" /> 3 Day Retention
-              </FeatureItem>
-              <FeatureItem>
-                <Check size={16} color="#2ecc71" /> 1 Member
-              </FeatureItem>
-              <FeatureItem>
-                <Check size={16} color="#2ecc71" /> 10k Logs/Day
-              </FeatureItem>
+              <Feature>10k Logs / Day</Feature>
+              <Feature>3 Days Retention</Feature>
+              <Feature>1 Project</Feature>
+              <Feature>Community Support</Feature>
             </FeatureList>
-            <PrimaryButton
-              href="/register"
-              style={{
-                width: "100%",
-                justifyContent: "center",
-                background: "rgba(255,255,255,0.1)",
-                color: "#fff",
-                border: "1px solid #30363d",
-              }}
-            >
-              Start Free
-            </PrimaryButton>
-          </PriceCard>
+          </Card>
 
-          {/* Pro Plan */}
-          <PriceCard $featured>
-            <CardTitle>Pro Team</CardTitle>
+          {/* PRO CARD */}
+          <Card $highlight>
+            <Badge>RECOMMENDED</Badge>
+            <PlanName>Pro</PlanName>
+            <p style={{ fontSize: 13, color: "#8b949e" }}>For serious developers.</p>
             <Price>
-              $29<span>/mo</span>
+              <Amount>{symbol}{calculatePrice(currentRate.pro)}</Amount>
+              <Period>/mo</Period>
             </Price>
-            <CardText>For startups shipping to production.</CardText>
-            <FeatureList>
-              <FeatureItem>
-                <Check size={16} color="#58a6ff" /> 30 Day Retention
-              </FeatureItem>
-              <FeatureItem>
-                <Check size={16} color="#58a6ff" /> 10 Members
-              </FeatureItem>
-              <FeatureItem>
-                <Check size={16} color="#58a6ff" /> 1M Logs/Day
-              </FeatureItem>
-              <FeatureItem>
-                <Check size={16} color="#58a6ff" /> Email Alerts
-              </FeatureItem>
-            </FeatureList>
-            <PrimaryButton
-              href="/register"
-              style={{ width: "100%", justifyContent: "center" }}
+            <CTA 
+              $variant="primary"
+              href={currency === 'NGN' ? '/paystack-link-pro' : '/lemon-link-pro'}
             >
-              Get Pro
-            </PrimaryButton>
-          </PriceCard>
+              Upgrade to Pro
+            </CTA>
+            <FeatureList>
+              <Feature>1 Million Logs / Day</Feature>
+              <Feature>14 Days Retention</Feature>
+              <Feature>10 Projects</Feature>
+              <Feature>Unlimited Members</Feature>
+              <Feature>Email Support</Feature>
+            </FeatureList>
+          </Card>
 
-          {/* Ultra Plan */}
-          <PriceCard>
-            <CardTitle>Enterprise</CardTitle>
-            <Price>Custom</Price>
-            <CardText>For high-volume data compliance.</CardText>
-            <FeatureList>
-              <FeatureItem>
-                <Check size={16} color="#2ecc71" /> 1 Year Retention
-              </FeatureItem>
-              <FeatureItem>
-                <Check size={16} color="#2ecc71" /> Unlimited Members
-              </FeatureItem>
-              <FeatureItem>
-                <Check size={16} color="#2ecc71" /> SSO & SAML
-              </FeatureItem>
-              <FeatureItem>
-                <Check size={16} color="#2ecc71" /> Dedicated VPC
-              </FeatureItem>
-            </FeatureList>
-            <PrimaryButton
-              href="mailto:sales@logengine.com"
-              style={{
-                width: "100%",
-                justifyContent: "center",
-                background: "rgba(255,255,255,0.1)",
-                color: "#fff",
-                border: "1px solid #30363d",
-              }}
+          {/* ULTRA CARD */}
+          <Card $ultra>
+            <PlanName $color="#ffd700">
+              Ultra <Info size={14} style={{ opacity: 0.7 }} />
+            </PlanName>
+            <p style={{ fontSize: 13, color: "#8b949e" }}>For scaling startups.</p>
+            <Price>
+              <Amount>{symbol}{calculatePrice(currentRate.ultra)}</Amount>
+              <Period>/mo</Period>
+            </Price>
+            <CTA 
+              $variant="gold"
+              href={currency === 'NGN' ? '/paystack-link-ultra' : '/lemon-link-ultra'}
             >
-              Contact Sales
-            </PrimaryButton>
-          </PriceCard>
-        </PricingGrid>
-      </PricingSection>
+              Get Ultra
+            </CTA>
+            <FeatureList>
+              <Feature>20 Million Logs / Day</Feature>
+              <Feature>30 Days Retention</Feature>
+              <Feature>Unlimited Projects</Feature>
+              <Feature>Unlimited Members</Feature>
+              <Feature>Cold Storage (S3/R2)</Feature>
+              <Feature>Priority Support</Feature>
+            </FeatureList>
+          </Card>
+        </Grid>
+      </Section>
     </Container>
+  );
+}
+function Feature({ children }: { children: React.ReactNode }) {
+  return (
+    <FeatureItem>
+      <CheckIcon>
+        <Check size={12} color="#fff" />
+      </CheckIcon>
+      {children}
+    </FeatureItem>
   );
 }

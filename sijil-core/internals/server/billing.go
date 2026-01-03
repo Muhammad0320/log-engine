@@ -58,7 +58,7 @@ func (s *Server) handlePayStackWebhook(c *gin.Context) {
 		var planID int
 		if event.Data.Amount == 12_500_00 {
 			planID = 2 // pro
-		} else if event.Data.Amount == 85_000_00 {
+		} else if event.Data.Amount == 95_000_00 {
 			planID = 3 // ultra
 		}
 
