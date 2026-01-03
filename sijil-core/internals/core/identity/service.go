@@ -21,7 +21,7 @@ func NewService(repo Repository, jwtSecret string, mailer EmailSender) *Service 
 	return &Service{repo: repo, jwtSecret: jwtSecret, mailer: mailer}
 }
 
-func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, error) {
+func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, *User, error) {
 
 	hash, _ := auth.HashPasswod(req.Password)
 
@@ -41,26 +41,51 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, er
 
 	id, err := s.repo.Create(ctx, u)
 	if err != nil {
-		return "", err
+		return "", &User{}, err
 	}
 
-	go s.mailer(u.Email, "Verify Account", rawToken)
+	user, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return "", &User{}, err
+	}
 
-	return auth.CreateJWT(s.jwtSecret, id)
+	go func() {
+
+		link := fmt.Sprintf("https://sijil.io/verify?token=%s", rawToken)
+		html := fmt.Sprintf(`
+			<h2>Welcome to Sijil, %s!</h2>
+			<p>Please verify your email to activate your account.</p>
+			<a href="%s" style="background:#000;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;">Verify Email</a>
+			<p>Or paste this link: %s</p>
+		`, u.FirstName, link, link)
+
+		err = s.mailer(u.Email, "Verify your Sijil Account", html)
+		if err != nil {
+			fmt.Println("SERVICE: failed tot send account verification email")
+
+		}
+
+	}()
+
+	token, err := auth.CreateJWT(s.jwtSecret, id)
+
+	return token, user, err
 }
 
-func (s *Service) Login(ctx context.Context, req LoginRequest) (string, error) {
+func (s *Service) Login(ctx context.Context, req LoginRequest) (string, *User, error) {
 
 	user, err := s.repo.GetByEmail(ctx, req.Email)
 	if err != nil {
-		return "", errors.New("invalid credentials")
+		return "", &User{}, errors.New("invalid credentials")
 	}
 
 	if !auth.ComparePasswordHash(req.Password, user.PasswordHash) {
-		return "", errors.New("invalid credentials")
+		return "", &User{}, errors.New("invalid credentials")
 	}
 
-	return auth.CreateJWT(s.jwtSecret, user.ID)
+	token, err := auth.CreateJWT(s.jwtSecret, user.ID)
+
+	return token, user, err
 }
 
 func (s *Service) VerifyEmail(ctx context.Context, rawToken string) error {
@@ -84,9 +109,18 @@ func (s *Service) ForgotPassword(ctx context.Context, email string) error {
 		return err
 	}
 
-	go func(email, token string) {
-		fmt.Printf("📧 [Email Mock] To: %s | Subject: Reset Password | Link: https://sijil.dev/reset-password?token=%s\n", email, token)
-	}(email, rawToken)
+	go func() {
+
+		link := fmt.Sprintf("https://sijil.dev/reset-password?token=%s", rawToken)
+		html := fmt.Sprintf(`
+			<h2>Reset your Password</h2>
+			<p>Someone requested a password reset for your Sijil account.</p>
+			<a href="%s" style="background:#000;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;">Reset Password</a>
+			<p>If this wasn't you, ignore this email.</p>
+		`, link)
+
+		err = s.mailer(email, "Reset Password request", html)
+	}()
 
 	return nil
 }

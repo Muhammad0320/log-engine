@@ -20,6 +20,11 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
+// type AuthResponse struct {
+// 	Token string `json:"token"`
+// 	User User `json:"user"`
+// }
+
 func (h *Handler) Register(c *gin.Context) {
 
 	var req RegisterRequest
@@ -28,7 +33,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.Register(c.Request.Context(), req)
+	token, user, err := h.service.Register(c.Request.Context(), req)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if err.Error() == "email already exists" {
@@ -38,7 +43,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"token": token})
+	c.JSON(http.StatusCreated, gin.H{"token": token, "user": user})
 }
 
 func (h *Handler) Login(c *gin.Context) {
@@ -49,13 +54,13 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.Login(c.Request.Context(), req)
+	token, user, err := h.service.Login(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "registration failed"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{"token": token, "user": user})
 }
 
 func (h *Handler) VerifyEmail(c *gin.Context) {
@@ -109,7 +114,6 @@ func (h *Handler) ResetPassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "password reset successfully"})
-
 }
 
 func (h *Handler) handleUploadAvatar(c *gin.Context) {
@@ -138,7 +142,11 @@ func (h *Handler) handleUploadAvatar(c *gin.Context) {
 	newImage := resize.Thumbnail(256, 256, img, resize.Lanczos3)
 
 	// Save to disk
-	os.MkdirAll("data/avatars", 0755)
+	err = os.MkdirAll("data/avatars", 0755)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to create avatar directory"})
+		return
+	}
 
 	filename := fmt.Sprintf("user-%d.jpg", userID)
 	outPath := filepath.Join("data/avatars", filename)
@@ -154,6 +162,10 @@ func (h *Handler) handleUploadAvatar(c *gin.Context) {
 
 	avatarUrl := fmt.Sprintf("/static/avatars/%s", filename)
 
-	c.JSON(200, gin.H{"data": avatarUrl})
+	if err = h.service.repo.UpdateUserAvatar(c.Request.Context(), userID, avatarUrl); err != nil {
+		c.JSON(500, gin.H{"error": "Database update failed"})
+		return
+	}
 
+	c.JSON(200, gin.H{"data": avatarUrl})
 }
