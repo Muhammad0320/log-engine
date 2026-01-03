@@ -20,6 +20,11 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
+// type AuthResponse struct {
+// 	Token string `json:"token"`
+// 	User User `json:"user"`
+// }
+
 func (h *Handler) Register(c *gin.Context) {
 
 	var req RegisterRequest
@@ -28,7 +33,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.Register(c.Request.Context(), req)
+	token, user, err := h.service.Register(c.Request.Context(), req)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if err.Error() == "email already exists" {
@@ -38,7 +43,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"token": token})
+	c.JSON(http.StatusCreated, gin.H{"token": token, "user": user})
 }
 
 func (h *Handler) Login(c *gin.Context) {
@@ -49,13 +54,13 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.Login(c.Request.Context(), req)
+	token, user, err := h.service.Login(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "registration failed"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{"token": token, "user": user})
 }
 
 func (h *Handler) VerifyEmail(c *gin.Context) {
@@ -163,5 +168,4 @@ func (h *Handler) handleUploadAvatar(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{"data": avatarUrl})
-
 }
