@@ -144,3 +144,9 @@ func (r *postgresRepository) ResetPasswordByToken(ctx context.Context, token, pa
 
 	return nil
 }
+
+func (r *postgresRepository) UpdateUserAvatar(ctx context.Context, userID int, avatarUrl string) error {
+	_, err := r.db.Exec(ctx, `UPDATE users SET avatar_url = $1 WHERE id = $2`, avatarUrl, userID)
+
+	return err
+}
