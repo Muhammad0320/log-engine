@@ -34,10 +34,13 @@ type CreateProjectResponse struct {
 
 func (s *Service) CreateProject(ctx context.Context, userID int, req CreateProjectRequest, plan *domain.Plan) (*CreateProjectResponse, error) {
 	// 1. Check Plan Limits
-	count, _ := s.repo.CountProjects(ctx, userID)
+	if plan.MaxProjects != -1 {
+		count, _ := s.repo.CountProjects(ctx, userID)
 
-	if count >= plan.MaxProjects {
-		return nil, ErrLimitReached
+		if count >= plan.MaxProjects {
+			return nil, ErrLimitReached
+		}
+
 	}
 
 	// 2. Generate Credentials

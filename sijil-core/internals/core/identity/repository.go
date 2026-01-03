@@ -14,4 +14,5 @@ type Repository interface {
 	VerifyUserAccount(ctx context.Context, token string) error
 	SetPasswordResetToken(ctx context.Context, email string, token string, expiry time.Time) error
 	ResetPasswordByToken(ctx context.Context, token, passwordHash string) error
+	UpdateUserAvatar(ctx context.Context, userID int, avatarURL string) error
 }

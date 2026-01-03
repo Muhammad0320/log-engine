@@ -109,7 +109,6 @@ func (h *Handler) ResetPassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "password reset successfully"})
-
 }
 
 func (h *Handler) handleUploadAvatar(c *gin.Context) {
@@ -138,7 +137,11 @@ func (h *Handler) handleUploadAvatar(c *gin.Context) {
 	newImage := resize.Thumbnail(256, 256, img, resize.Lanczos3)
 
 	// Save to disk
-	os.MkdirAll("data/avatars", 0755)
+	err = os.MkdirAll("data/avatars", 0755)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to create avatar directory"})
+		return
+	}
 
 	filename := fmt.Sprintf("user-%d.jpg", userID)
 	outPath := filepath.Join("data/avatars", filename)
@@ -153,6 +156,11 @@ func (h *Handler) handleUploadAvatar(c *gin.Context) {
 	jpeg.Encode(out, newImage, &jpeg.Options{Quality: 75})
 
 	avatarUrl := fmt.Sprintf("/static/avatars/%s", filename)
+
+	if err = h.service.repo.UpdateUserAvatar(c.Request.Context(), userID, avatarUrl); err != nil {
+		c.JSON(500, gin.H{"error": "Database update failed"})
+		return
+	}
 
 	c.JSON(200, gin.H{"data": avatarUrl})
 
