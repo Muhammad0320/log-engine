@@ -43,7 +43,7 @@ func (r *postgresRepository) GetPlanByUserID(ctx context.Context, id int) (*doma
 func (r *postgresRepository) Create(ctx context.Context, u *User) (int, error) {
 	var newUserID int
 	err := r.db.QueryRow(ctx,
-		`INSERT INTO users (firstname, lastname, email, password_hash, verification_token, verification_expires, plan_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+		`INSERT INTO users (firstname, lastname, email, password_hash ,verification_token, verification_expires, plan_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
 		u.FirstName, u.LastName, u.Email, u.PasswordHash, u.VerificationToken, u.VerificationTokenExpires, 1,
 	).Scan(&newUserID)
 
@@ -64,10 +64,10 @@ func (r *postgresRepository) GetByEmail(ctx context.Context, email string) (*Use
 	var u User
 
 	err := r.db.QueryRow(ctx,
-		`SELECT id, firstname, lastname, email, password_hash, plan_id, is_verified 
+		`SELECT id, firstname, lastname, email, password_hash, avatar_url ,plan_id, is_verified 
          FROM users WHERE email = $1`,
 		email,
-	).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.PasswordHash, &u.PlanID, &u.IsVerified)
+	).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.PasswordHash, &u.AvatarURL, &u.PlanID, &u.IsVerified)
 
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -81,10 +81,10 @@ func (r *postgresRepository) GetByID(ctx context.Context, id int) (*User, error)
 	var u User
 
 	err := r.db.QueryRow(ctx,
-		`SELECT id, firstname, lastname, email, password_hash, plan_id, is_verified 
+		`SELECT id, firstname, lastname, email, password_hash, avatar_url, plan_id, is_verified 
          FROM users WHERE id = $1`,
 		id,
-	).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.PasswordHash, &u.PlanID, &u.IsVerified)
+	).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.PasswordHash, &u.AvatarURL, &u.PlanID, &u.IsVerified)
 
 	if err != nil {
 		return &u, errors.New("user not found")
