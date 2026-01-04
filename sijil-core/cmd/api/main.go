@@ -131,7 +131,7 @@ func main() {
 		fmt.Println("✅ Wal is empty. Clean startup.")
 	}
 
-	// Now it's sake to NUKE the files
+	// Now it's safe to NUKE the files
 	wal.Reset()
 	// -- End Recovery
 
