@@ -132,10 +132,6 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, password string) 
 	return s.repo.ResetPasswordByToken(ctx, hashedToken, hashPassword)
 }
 
-func (s *Service) UpgradePlan(ctx context.Context, userID int, planName string) error {
-	plan, err := s.repo.GetPlanByName(ctx, planName)
-	if err != nil {
-		return err
-	}
-	return s.repo.UpdateUserPlan(ctx, userID, plan.ID)
+func (s *Service) UpgradePlan(ctx context.Context, userID int, planID int, expiry time.Time) error {
+	return s.repo.UpdateUserPlan(ctx, userID, planID, expiry)
 }

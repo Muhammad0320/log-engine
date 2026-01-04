@@ -58,12 +58,12 @@ func (r *postgresRepository) GetPlanByName(ctx context.Context, name string) (*d
 	return &p, nil
 }
 
-func (r *postgresRepository) UpdateUserPlan(ctx context.Context, userID, planID int) error {
+func (r *postgresRepository) UpdateUserPlan(ctx context.Context, userID, planID int, expiry time.Time) error {
 	_, err := r.db.Exec(ctx, `
 		UPDATE users
-		SET plan_id = $1
-		WHERE id = $2
-	`, planID, userID)
+		SET plan_id = $1, plan_expires_at = $2
+		WHERE id = $3
+	`, planID, expiry, userID)
 	return err
 }
 
