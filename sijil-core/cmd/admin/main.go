@@ -44,9 +44,29 @@ func mian() {
 	}
 	defer db.Close()
 
+	switch *action {
+
+	case "promote":
+		if *email == "" || *planID == 0 {
+			log.Fatal("Usage: -action=promote email=... plan_id=2")
+		}
+
+		promoteUser(ctx, db, *email, *planID)
+
+	case "ban":
+		if *email == "" {
+			log.Fatal("Usage -action=ban email=...")
+		}
+		banUser(ctx, db, *email)
+	case "stats":
+		showStats(ctx, db)
+	default:
+		printHelp()
+
+	}
 }
 
-func promoteUser(ctx context.Context, db *pgxpool.Pool, email string, planID string) {
+func promoteUser(ctx context.Context, db *pgxpool.Pool, email string, planID int) {
 
 	tag, err := db.Exec(ctx, "UPDATE users SET plan_id = $1 WHERE email = $2", planID, email)
 	if err != nil {
