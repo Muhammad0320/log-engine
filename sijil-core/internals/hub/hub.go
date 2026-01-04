@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"sijil-core/internals/database"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -97,6 +98,7 @@ func (c *Client) writePump() {
 
 // Hub maintains the set of active clients and broadcast messages
 type Hub struct {
+	mu         *sync.RWMutex
 	rooms      map[int]map[*Client]bool
 	broadcast  chan database.LogEntry
 	register   chan *Client
