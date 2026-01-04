@@ -28,8 +28,6 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("Did you reach here? -------------------")
-
 	token, user, err := h.service.Register(c.Request.Context(), req)
 	if err != nil {
 		status := http.StatusInternalServerError

@@ -27,11 +27,11 @@ const LogRow = styled.div<{ $level: string; $isOpen: boolean }>`
       : "#2ecc71"};
 
   background: ${(p) =>
-    p.$isOpen 
-      ? "rgba(88, 166, 255, 0.1)" 
-      : p.$level === "ERROR" 
-        ? "rgba(255, 107, 107, 0.05)" 
-        : "transparent"};
+    p.$isOpen
+      ? "rgba(88, 166, 255, 0.1)"
+      : p.$level === "ERROR"
+      ? "rgba(255, 107, 107, 0.05)"
+      : "transparent"};
 
   color: #c9d1d9;
   display: flex;
@@ -104,21 +104,32 @@ const LogItem = ({ log }: LogItemProps) => {
 
   return (
     <RowContainer>
-      <LogRow 
-        $level={log.level} 
-        $isOpen={isOpen} 
+      <LogRow
+        $level={log.level}
+        $isOpen={isOpen}
         onClick={() => hasData && setIsOpen(!isOpen)}
-        style={{ cursor: hasData ? 'pointer' : 'default' }}
+        style={{ cursor: hasData ? "pointer" : "default" }}
       >
         {/* Toggle Icon */}
-        <div style={{ width: 16, display: 'flex', alignItems: 'center', opacity: 0.6 }}>
-          {hasData && (
-            isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-          )}
+        <div
+          style={{
+            width: 16,
+            display: "flex",
+            alignItems: "center",
+            opacity: 0.6,
+          }}
+        >
+          {hasData &&
+            (isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />)}
         </div>
 
         <Timestamp>
-          {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+          {new Date(log.timestamp).toLocaleTimeString([], {
+            hour12: false,
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })}
         </Timestamp>
 
         <Level $level={log.level}>{log.level.slice(0, 4).toUpperCase()}</Level>
@@ -129,9 +140,7 @@ const LogItem = ({ log }: LogItemProps) => {
       </LogRow>
 
       {isOpen && hasData && (
-        <DataView>
-          {JSON.stringify(log.data, null, 2)}
-        </DataView>
+        <DataView>{JSON.stringify(log.data, null, 2)}</DataView>
       )}
     </RowContainer>
   );
@@ -151,7 +160,9 @@ export default function LogList({ logs }: LogListProps) {
         data={logs}
         followOutput="auto"
         initialTopMostItemIndex={logs.length - 1}
-        itemContent={(index, log) => <LogItem key={log.timestamp + index} log={log} />}
+        itemContent={(index, log) => (
+          <LogItem key={log.timestamp + index} log={log} />
+        )}
       />
     </div>
   );

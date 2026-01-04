@@ -16,6 +16,7 @@ import (
 	"sijil-core/internals/ingest"
 	"sijil-core/internals/shared"
 	"testing"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -124,7 +125,8 @@ func TestRBAC_EndToEnd(t *testing.T) {
 	// We do this here so Step 4 doesn't fail on "Quota Exceeded" before hitting "Conflict"
 	// ----------------------------------------------------------------------
 	adminUser, _ := s.identityRepo.GetByEmail(context.Background(), "admin@test.com")
-	if err := s.identityRepo.UpdateUserPlan(context.Background(), adminUser.ID, 2); err != nil {
+	duration := time.Now().AddDate(0, 0, 30)
+	if err := s.identityRepo.UpdateUserPlan(context.Background(), adminUser.ID, 2, duration); err != nil {
 		t.Fatalf("Failed to force upgrade admin user: %v", err)
 	}
 	// ----------------------------------------------------------------------

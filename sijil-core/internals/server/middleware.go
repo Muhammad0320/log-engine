@@ -89,8 +89,6 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 
 		userID := int(userIDFloat)
 
-		fmt.Println(userID, "---------------------")
-
 		plan, err := s.identityRepo.GetPlanByUserID(c.Request.Context(), userID)
 		if err != nil {
 			fmt.Println("This is the stupid error ----------------", err)
