@@ -14,7 +14,7 @@ type User struct {
 	VerificationTokenExpires *time.Time `json:"-"`
 	ResetToken               *string    `json:"-"`
 	ResetTokenExpires        *time.Time `json:"-"`
-	AvatarURL                string     `json:"avatar_url"`
+	AvatarURL                *string    `json:"avatar_url"`
 	CreatedAt                time.Time  `json:"created_at"`
 }
 
