@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goccy/go-json"
 	"github.com/gorilla/websocket"
 )
 
@@ -149,7 +148,7 @@ func (h *Hub) Run() {
 				continue
 			}
 
-			message, _ := json.Marshal(logEntry)
+			message, _ := logEntry.Serialize()
 
 			for client := range h.rooms[projectID] {
 				select {
