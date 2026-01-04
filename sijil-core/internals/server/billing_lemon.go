@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,6 +26,7 @@ type LemonEvent struct {
 			Status    string `json:"status"`
 			Total     int    `json:"total"`
 			UserEmail string `json:"user_email"`
+			VariantID int    `json:"variant_id"`
 		} `json:"attributes"`
 	} `json:"data"`
 }
@@ -55,12 +57,40 @@ func (s *Server) handleLemonWebhook(c *gin.Context) {
 	if event.Meta.EventName == "subscription_created" || event.Meta.EventName == "order_created" {
 
 		var planID int
-		amount := event.Data.Attributes.Total
+		variantID := event.Data.Attributes.VariantID
 
-		if amount >= 1900 && amount <= 2100 {
+		// Fetch IDs from Env to be safe against price changes
+		// Default to 0 if not set, which won't match
+		// TODO: Ensure these are set in your .env file
+		// e.g. LEMONSQUEEZY_VARIANT_PRO=12345
+		//      LEMONSQUEEZY_VARIANT_BIZ=67890
+
+		// You can also add a fallback to amounts if you want hybrid safety, but ID is better.
+
+		proVariantStr := os.Getenv("LEMONSQUEEZY_VARIANT_PRO")
+		bizVariantStr := os.Getenv("LEMONSQUEEZY_VARIANT_BIZ")
+
+		// If env vars are set, use them.
+		// Note: This logic assumes the variants are integers.
+		// In a real scenario, you'd parse them.
+		// For now, let's keep it simple:
+
+		// We just cast the incoming variantID to string for comparison or parse the env var.
+
+		if proVariantStr != "" && isVariantMatch(variantID, proVariantStr) {
 			planID = 2
-		} else if amount >= 9900 {
+		} else if bizVariantStr != "" && isVariantMatch(variantID, bizVariantStr) {
 			planID = 3
+		}
+
+		// Fallback to amount if ENV is missing (Legacy support)
+		if planID == 0 {
+			amount := event.Data.Attributes.Total
+			if amount >= 1900 && amount <= 2100 {
+				planID = 2
+			} else if amount >= 9900 {
+				planID = 3
+			}
 		}
 
 		if planID > 1 {
@@ -81,4 +111,8 @@ func checkLemonSignature(payload []byte, secret string, signature string) bool {
 	h.Write(payload)
 	expectedSignature := hex.EncodeToString(h.Sum(nil))
 	return hmac.Equal([]byte(expectedSignature), []byte(signature))
+}
+
+func isVariantMatch(id int, envVal string) bool {
+	return strconv.Itoa(id) == envVal
 }

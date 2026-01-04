@@ -18,6 +18,7 @@ type PayStackEvent struct {
 		Reference string `json:"references"`
 		Status    string `json:"status"`
 		Amount    int    `json:"amount"`
+		PlanCode  string `json:"plan"` // Paystack returns plan code here
 		Customer  struct {
 			Email string `json:"email"`
 		} `json:"customer"`
@@ -53,12 +54,29 @@ func (s *Server) handlePayStackWebhook(c *gin.Context) {
 	}
 
 	// 3. Update the database
-	if event.Event == "charge.success" {
+	if event.Event == "charge.success" || event.Event == "subscription.create" {
 		var planID int
-		if event.Data.Amount == 12_500_00 {
+
+		// Use Plan Code from Env
+		// e.g. PAYSTACK_PLAN_PRO=PLN_gx2wn530m0i3yba
+		proPlanCode := os.Getenv("PAYSTACK_PLAN_PRO")
+		bizPlanCode := os.Getenv("PAYSTACK_PLAN_BIZ")
+
+		incomingPlan := event.Data.PlanCode
+
+		if proPlanCode != "" && incomingPlan == proPlanCode {
 			planID = 2
-		} else if event.Data.Amount == 95_000_00 {
+		} else if bizPlanCode != "" && incomingPlan == bizPlanCode {
 			planID = 3
+		}
+
+		// Fallback to amount
+		if planID == 0 {
+			if event.Data.Amount == 12_500_00 {
+				planID = 2
+			} else if event.Data.Amount == 95_000_00 {
+				planID = 3
+			}
 		}
 
 		if planID > 1 {

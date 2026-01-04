@@ -21,9 +21,11 @@ export async function middleware(request: NextRequest) {
 
   // 2. If Session EXISTS, verify it
   try {
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "test-secret-key"
-    );
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not set in environment variables");
+    }
+
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
     await jwtVerify(session, secret);
 
