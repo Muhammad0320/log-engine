@@ -94,7 +94,8 @@ func (w *WAL) openSegment(seq int) error {
 
 	stat, _ := f.Stat()
 	w.activeFile = f
-	w.bufWriter = bufio.NewWriterSize(f, 64*1024)
+	// Increased buffer size to 1MB to reduce syscalls and lock contention on flush
+	w.bufWriter = bufio.NewWriterSize(f, 1024*1024)
 	w.activeSeq = seq
 	w.currentSize = stat.Size()
 
@@ -102,25 +103,32 @@ func (w *WAL) openSegment(seq int) error {
 }
 
 func (w *WAL) WriteBatch(batch []database.LogEntry) error {
+	// 1. Serialize OUTSIDE the lock
+	// We do the CPU intensive work here so multiple workers can do this in parallel
+	serializedBatch := make([][]byte, 0, len(batch))
+	for i := range batch {
+		data, err := batch[i].Serialize()
+		if err != nil {
+			continue // skip bad logs
+		}
+		serializedBatch = append(serializedBatch, data)
+	}
 
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	// 1. Check Rotation
+	// 2. Check Rotation
 	if w.currentSize > MaxSegmentSize {
 		if err := w.rotate(); err != nil {
 			return err
 		}
 	}
 
-	for i := range batch {
-
+	// 3. Write pre-serialized data
+	for i, data := range serializedBatch {
+		// Update the SegmentID on the original struct while we have the lock/sequence
+		// This is fast (memory assignment)
 		batch[i].SegmentID = w.activeSeq
-
-		data, err := batch[i].Serialize()
-		if err != nil {
-			continue
-		}
 
 		// Write Length Prefix (for easy reading later)
 		length := int32(len(data))
@@ -137,7 +145,10 @@ func (w *WAL) WriteBatch(batch []database.LogEntry) error {
 		w.currentSize += int64(4 + len(data))
 	}
 
-	return w.bufWriter.Flush()
+	// 4. Do NOT Flush here.
+	// Rely on bufio size (1MB) and the background Sync ticker for durability.
+	// This creates the "Buffered WAL" behavior.
+	return nil
 }
 
 func (w *WAL) Sync() error {
@@ -145,6 +156,13 @@ func (w *WAL) Sync() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if w.activeFile != nil {
+		// Ensure any buffered data is written to the file descriptor
+		if w.bufWriter != nil {
+			if err := w.bufWriter.Flush(); err != nil {
+				return err
+			}
+		}
+		// Then sync the file descriptor to disk
 		return w.activeFile.Sync()
 	}
 	return nil
@@ -154,6 +172,10 @@ func (w *WAL) Sync() error {
 // rotate closes the current file and opens the next sequence
 func (w *WAL) rotate() error {
 	if w.activeFile != nil {
+		// Ensure everything is written before closing
+		if w.bufWriter != nil {
+			w.bufWriter.Flush()
+		}
 		w.activeFile.Close()
 	}
 
@@ -233,6 +255,9 @@ func (w *WAL) Close() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if w.activeFile != nil {
+		if w.bufWriter != nil {
+			w.bufWriter.Flush()
+		}
 		return w.activeFile.Close()
 	}
 	return nil

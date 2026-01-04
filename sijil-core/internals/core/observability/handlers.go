@@ -1,12 +1,12 @@
 package observability
 
 import (
-	"encoding/json"
 	"net/http"
 	"sijil-core/internals/core/domain"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/goccy/go-json"
 )
 
 type Handler struct {
