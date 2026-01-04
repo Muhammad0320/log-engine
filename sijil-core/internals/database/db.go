@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/goccy/go-json"
 	"strings"
 	"time"
+
+	"github.com/goccy/go-json"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -542,18 +543,64 @@ func GetlogSummary(ctx context.Context, db *pgxpool.Pool, projectID int, fromTim
 }
 
 func RunRetentionPolicy(ctx context.Context, db *pgxpool.Pool) {
-	ticker := time.NewTicker(24 * time.Hour)
+	ticker := time.NewTicker(6 * time.Hour)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			_, err := db.Exec(ctx, "SELECT drop_chunks('logs', INTERVAL '30 days');")
+			fmt.Println("🧹 Starting Retention Policy Job")
+
+			_, err := db.Exec(ctx, `
+				DELETE FROM logs
+				WHERE timestamp < NOW() - INTERVAL '3 days' 
+				AND project_id IN (
+					SELECT p.id FROM projects
+					JOIN users u ON p.user_id = u.id
+					WHERE u.plan_id = 1
+				);
+			`)
+
 			if err != nil {
-				fmt.Printf("⚠️ Global Retention Policy failed: %v\n", err)
-			} else {
-				fmt.Println("🧹 Global Retention policy Ran: Cleared logs > 30 days old.")
+				fmt.Printf("⚠️ Failed to clean Free tier logs. %v\n", err)
 			}
+
+			_, err = db.Exec(ctx, `
+				DELETE FROM logs
+				WHERE timestamp < NOW() - INTERVAL '14 days' 
+				AND project_id IN (
+					SELECT p.id FROM projects
+					JOIN users u ON p.user_id = u.id
+					WHERE u.plan_id = 2
+				);
+			`)
+			if err != nil {
+				fmt.Printf("⚠️ Failed to clean Pro tier logs. %v\n", err)
+			}
+
+			// Ideally we should save into cold storage like S3 before deleting but this is a okay for v1
+			_, err = db.Exec(ctx, `
+				DELETE FROM logs
+				WHERE timestamp < NOW() - INTERVAL '30 days' 
+				AND project_id IN (
+					SELECT p.id FROM projects
+					JOIN users u ON p.user_id = u.id
+					WHERE u.plan_id = 3
+				);
+			`)
+
+			if err != nil {
+				fmt.Printf("⚠️ Failed to clean Ultra  tier logs. %v\n", err)
+			}
+
+			// 4. Global safety Net. Just in case we missed something
+			_, err = db.Exec(ctx, "SELECT drop_chunks('logs', INTERVAL '60 days');")
+			if err != nil {
+				fmt.Printf("⚠️ Gloabal aafety net failedL %v\n", err)
+			}
+
+			fmt.Println("✅ Retention Policy Job completed")
+
 		case <-ctx.Done():
 			return
 		}
