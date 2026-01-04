@@ -21,6 +21,9 @@ import vault from "../../../public/vault-green.png";
 import serverExploded from "../../../public/server-exploded.png";
 import cacheImg from "../../../public/cache.png";
 import websocket from "../../../public/websocket.png";
+import HeroRollingText, {
+  HandDrawnHighlight,
+} from "@/components/marketing/HeroText";
 
 // --- ANIMATIONS ---
 const blink = keyframes`
@@ -514,22 +517,20 @@ export default function MarketingPage() {
 
         <Reveal delay={100}>
           <HeroTitle>
-            The Log Engine for <br />
-            <Typewriter
-              words={[
-                "90k logs / seconds.",
-                "Realtime Debugging.",
-                "Scale & Durability.",
-              ]}
-            />
+            <HeroRollingText />
           </HeroTitle>
         </Reveal>
 
         <Reveal delay={200}>
           <Subtitle>
-            A purpose-built observability platform. Written in Go.
+            Built by developers, for{" "}
+            <HandDrawnHighlight> developers </HandDrawnHighlight>.
             <br />
-            Backed by TimescaleDB. Powered by a crash-proof WAL.
+            <span
+              style={{ color: "white", fontWeight: "bold", display: "block" }}
+            >
+              100,000+ Logs/Seconds. Sigle Node.
+            </span>
           </Subtitle>
         </Reveal>
 
