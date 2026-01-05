@@ -4,6 +4,8 @@ import styled from "styled-components";
 import Link from "next/link";
 import { BorderBeamButton } from "@/components/ui/borderBeamButton";
 import Footer from "@/components/layout/Footer";
+import Image from "next/image";
+import logo from "../../../public/logo.png";
 
 const Nav = styled.nav`
   display: flex;
@@ -36,27 +38,6 @@ const LogoContainer = styled(Link)`
   align-items: center;
   gap: 12px;
   text-decoration: none;
-`;
-
-const LogoIcon = styled.div`
-  width: 32px;
-  height: 32px;
-  background: #58a6ff;
-  border-radius: 6px;
-  position: relative;
-  overflow: hidden;
-
-  /* Abstract shutter/speed lines */
-  &::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 200%;
-    height: 4px;
-    background: #000;
-    transform: translate(-50%, -50%) rotate(45deg);
-  }
 `;
 
 const BrandName = styled.span`
@@ -103,7 +84,7 @@ export default function MarketingLayout({
     <div style={{ backgroundColor: "#050505", minHeight: "100vh" }}>
       <Nav>
         <LogoContainer href="/">
-          <LogoIcon />
+          <Image src={logo} alt="sijil logo" />
           <BrandName>Sijil</BrandName>
         </LogoContainer>
 

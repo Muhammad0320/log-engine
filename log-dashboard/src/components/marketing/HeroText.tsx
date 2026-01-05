@@ -8,17 +8,24 @@ const roll = keyframes`
   25% { transform: translateY(-100%); }
   50% { transform: translateY(-200%); }
   75% { transform: translateY(-300%); }
-  100% { transform: translateY(0); } /* Loop back */
+  100% { transform: translateY(0); }
+`;
+
+// Wrapper to keep "The Log Engine for" and the Rolling text on one line
+const Wrapper = styled.span`
+  display: inline-flex;
+  align-items: center; /* Vertical center alignment */
+  justify-content: center;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  gap: 12px; /* Space between "for" and the rolling words */
 `;
 
 const Container = styled.div`
   display: inline-block;
-  height: 1.1em;
+  height: 1.2em; /* Locked height matches font line-height */
+  line-height: 1.2em;
   overflow: hidden;
   vertical-align: bottom;
-  position: relative;
-  width: auto;
-  min-width: 300px; /* Prevent layout shift */
   text-align: left;
 `;
 
@@ -30,70 +37,56 @@ const RollList = styled.ul`
 `;
 
 const RollItem = styled.li`
-  height: 1.1em;
-  display: flex;
-  align-items: center;
+  height: 1.2em;
+  line-height: 1.2em;
+  display: block;
   color: #58a6ff;
   font-weight: 800;
-  padding-left: 12px;
 `;
 
-// The Hand-Drawn Underline SVG
 const Underline = styled.svg`
   position: absolute;
-  bottom: -10px;
+  bottom: -8px; /* Moved closer */
   left: 0;
   width: 100%;
   height: 12px;
   z-index: -1;
-
+  
   path {
-    stroke: #58a6ff;
-    stroke-width: 3;
+    stroke: #1f6feb; /* Darker, Deeper Blue */
+    stroke-width: 4; /* Thinner (was 8) */
     stroke-linecap: round;
     stroke-dasharray: 400;
     stroke-dashoffset: 400;
     fill: none;
+    opacity: 0.9; /* More visible */
     animation: draw 1s ease-out forwards 0.5s;
   }
 
   @keyframes draw {
-    to {
-      stroke-dashoffset: 0;
-    }
+    to { stroke-dashoffset: 0; }
   }
 `;
 
 export default function HeroRollingText() {
   return (
-    <span
-      style={{
-        display: "inline-flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
-      The Log Engine for{" "}
+    <Wrapper>
+      The Log Engine for
       <Container>
         <RollList>
           <RollItem>Hyperscale Ingestion.</RollItem>
           <RollItem>HFT Systems.</RollItem>
           <RollItem>Realtime Debugging.</RollItem>
-          <RollItem>Hyperscale Ingestion.</RollItem>{" "}
-          {/* Repeat first for seamless loop */}
+          <RollItem>Hyperscale Ingestion.</RollItem>
         </RollList>
       </Container>
-    </span>
+    </Wrapper>
   );
 }
 
-export function HandDrawnHighlight({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function HandDrawnHighlight({ children }: { children: React.ReactNode }) {
   return (
-    <span style={{ position: "relative", display: "inline-block" }}>
+    <span style={{ position: "relative", display: "inline-block", whiteSpace: "nowrap" }}>
       {children}
       <Underline viewBox="0 0 200 9" preserveAspectRatio="none">
         <path d="M2.00025 6.99997C25.7201 5.2046 82.5279 -0.963287 197.999 2.00003" />
