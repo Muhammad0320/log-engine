@@ -5,7 +5,7 @@ import Link from "next/link";
 import { BorderBeamButton } from "@/components/ui/borderBeamButton";
 import Footer from "@/components/layout/Footer";
 import Image from "next/image";
-import logo from "../../../public/logo.png";
+import logo from "../../../public/icon.png";
 
 const Nav = styled.nav`
   display: flex;

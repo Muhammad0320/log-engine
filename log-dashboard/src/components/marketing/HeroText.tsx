@@ -3,43 +3,48 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
 
-// --- 1. THE ROLLING TEXT ANIMATION ---
-// The math: 3 items. Total 100%.
-// 0% -> 25%: Stay at 1
-// 25% -> 33%: Move to 2
-// 33% -> 58%: Stay at 2
-// 58% -> 66%: Move to 3
-// 66% -> 91%: Stay at 3
-// 91% -> 100%: Move back to 1
-const snapRoll = keyframes`
-  0%, 25% { transform: translateY(0); }
-  33%, 58% { transform: translateY(-100%); }
-  66%, 91% { transform: translateY(-200%); }
-  100% { transform: translateY(0); } /* Instant reset or slide depending on items */
+// Total Items: 4 (3 real + 1 clone)
+// We want to pause on each item for 25% of the time, then slide.
+const infiniteScroll = keyframes`
+  0%, 20% { transform: translateY(0); }        /* Item 1 */
+  25%, 45% { transform: translateY(-100%); }   /* Item 2 */
+  50%, 70% { transform: translateY(-200%); }   /* Item 3 */
+  75%, 95% { transform: translateY(-300%); }   /* Item 4 (Clone of 1) */
+  100% { transform: translateY(-300%); }       /* End state (visually same as start) */
 `;
 
 const Wrapper = styled.span`
   display: inline-flex;
   flex-direction: column;
-  height: 1.1em; /* Perfectly matches line-height */
+  height: 1.1em; /* Locked height */
   overflow: hidden;
-  vertical-align: bottom; /* Aligns with the baseline of "The Log Engine for" */
+  vertical-align: bottom;
   text-align: left;
   margin-left: 12px;
 `;
 
-const RollList = styled.span`
-  display: block;
-  animation: ${snapRoll} 6s cubic-bezier(0.5, 0, 0.2, 1) infinite;
+const RollList = styled.ul`
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* 8s duration:
+     2s per item (1.5s pause + 0.5s slide)
+  */
+  animation: ${infiniteScroll} 8s cubic-bezier(0.5, 0, 0.2, 1) infinite;
+
+  /* IMPORTANT: When animation ends at 100% (Item 4), 
+     it loops back to 0% (Item 1) instantly. 
+     Since Item 4 == Item 1, the jump is invisible. 
+  */
 `;
 
-const RollItem = styled.span`
-  display: block;
+const RollItem = styled.li`
   height: 1.1em;
   line-height: 1.1em;
+  display: block;
   color: #58a6ff;
   font-weight: 800;
-  /* Cyberpunk text shadow for "Luxury" feel */
+  white-space: nowrap;
   text-shadow: 0 0 20px rgba(88, 166, 255, 0.4);
 `;
 
@@ -50,61 +55,57 @@ export default function HeroRollingText() {
         <RollItem>Hyperscale Ingestion.</RollItem>
         <RollItem>HFT Systems.</RollItem>
         <RollItem>Realtime Debugging.</RollItem>
-        {/* Duplicate first item for seamless loop if needed, 
-            but for 3-step snap, we usually just snap back to 0. 
-            Let's keep 3 distinct items for simplicity. */}
+        {/* CLONE THE FIRST ITEM HERE */}
+        <RollItem>Hyperscale Ingestion.</RollItem>
       </RollList>
     </Wrapper>
   );
 }
 
-// --- 2. THE CYBER HIGHLIGHTER (Interactive) ---
-
-const squiggly = keyframes`
-  0% { background-position: 0 0; }
-  100% { background-position: 100% 0; }
-`;
-
-const HighlightSpan = styled.span`
-  position: relative;
-  z-index: 1;
-  font-weight: 800;
-  cursor: pointer;
-  color: #fff;
-  white-space: nowrap;
-  padding: 0 4px;
-
-  /* The "Underline" is now a pseudo-element highlighter */
-  &::before {
-    content: "";
-    position: absolute;
-    bottom: 2px;
-    left: 0;
-    width: 100%;
-    height: 30%; /* Only covers bottom third like a marker */
-    background: #1f6feb; /* Deep Blue */
-    z-index: -1;
-    transform: skew(-12deg) rotate(-2deg);
-    transition: all 0.2s ease;
-    border-radius: 4px;
-    opacity: 0.8;
-  }
-
-  /* Hover Effect: Expands and Glows */
-  &:hover::before {
-    height: 90%; /* Covers full text */
-    bottom: 5%;
-    transform: skew(-12deg) rotate(0deg) scale(1.05);
-    background: #58a6ff; /* Brighter Blue */
-    opacity: 1;
-    box-shadow: 0 0 15px #58a6ff;
-  }
-`;
-
+// ... HandDrawnHighlight remains the same (removed unused 'squiggly') ...
 export function HandDrawnHighlight({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <HighlightSpan>{children}</HighlightSpan>;
+  return (
+    <span
+      style={{
+        position: "relative",
+        display: "inline-block",
+        padding: "0 4px",
+        fontWeight: 800,
+        color: "#fff",
+        cursor: "pointer",
+      }}
+    >
+      <span style={{ position: "relative", zIndex: 1 }}>{children}</span>
+      <div
+        style={{
+          content: '""',
+          position: "absolute",
+          bottom: "2px",
+          left: 0,
+          width: "100%",
+          height: "30%",
+          background: "#1f6feb",
+          zIndex: 0,
+          transform: "skew(-12deg) rotate(-2deg)",
+          opacity: 0.8,
+          borderRadius: "4px",
+          transition: "all 0.2s ease",
+        }}
+        className="highlight-bg"
+      />
+      <style jsx>{`
+        span:hover .highlight-bg {
+          height: 90%;
+          bottom: 5%;
+          background: #58a6ff;
+          opacity: 1;
+          box-shadow: 0 0 15px #58a6ff;
+        }
+      `}</style>
+    </span>
+  );
 }
