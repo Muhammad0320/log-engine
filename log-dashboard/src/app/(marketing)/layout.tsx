@@ -75,6 +75,17 @@ const AuthButtons = styled.div`
   align-items: center;
 `;
 
+const ImageContainer = styled.div`
+  position: relative;
+  width: 40px;
+  height: 40px;
+
+  /* This prevents the image from bleeding out */
+  img {
+    object-fit: contain;
+  }
+`;
+
 export default function MarketingLayout({
   children,
 }: {
@@ -84,7 +95,9 @@ export default function MarketingLayout({
     <div style={{ backgroundColor: "#050505", minHeight: "100vh" }}>
       <Nav>
         <LogoContainer href="/">
-          <Image src={logo} alt="sijil logo" />
+          <ImageContainer>
+            <Image src={logo} fill alt="sijil logo" />
+          </ImageContainer>
           <BrandName>Sijil</BrandName>
         </LogoContainer>
 

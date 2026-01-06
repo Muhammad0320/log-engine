@@ -13,3 +13,5 @@ Now I git a different error message, I think it's because you moved the env file
 exit status 1
 
 docker exec -it sijil-core-db psql -d log_db -U postgres SELECT * from projects
+
+https://cloud.digitalocean.com/github-student-pack?onboarding_origin=github-student-pack&activation_redirect=%2Fgithub-student-pack&i=a1c200
