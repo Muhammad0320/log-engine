@@ -739,7 +739,7 @@ export default function MarketingPage() {
         </SplitLayout>
       </CodeSection>
       {/* 3. Pricing Section */}
-      <PricingSection />/
+      <PricingSection />
     </Container>
   );
 }
