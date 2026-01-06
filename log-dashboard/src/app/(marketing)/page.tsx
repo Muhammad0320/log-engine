@@ -2,7 +2,7 @@
 
 import React from "react";
 import styled, { keyframes } from "styled-components";
-import { ArrowRight, Database, Zap, Shield, Cpu } from "lucide-react";
+import { ArrowRight, Database, Zap, Shield, Cpu, Code } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -12,6 +12,9 @@ import vault from "../../../public/vault-green.png";
 import server from "../../../public/server.png";
 import cacheImg from "../../../public/cache.png";
 import websocket from "../../../public/websocket.png";
+import sdkImage from "../../../public/sdk.png";
+import agentImage from "../../../public/agent.png";
+
 import HeroRollingText, {
   HandDrawnHighlight,
 } from "@/components/marketing/HeroText";
@@ -337,6 +340,56 @@ const SoftImage = styled.div`
   pointer-events: none;
 `;
 
+const CodeSection = styled.section`
+  padding: 100px 24px;
+  background: linear-gradient(180deg, #050505 0%, #0d1117 100%);
+  border-top: 1px solid #30363d;
+`;
+
+const SplitLayout = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 64px;
+  max-width: 1200px;
+  margin: 0 auto 120px;
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+  }
+`;
+
+const TextBlock = styled.div`
+  flex: 1;
+`;
+const VisualBlock = styled.div`
+  flex: 1;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 32px;
+  position: relative;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const AgentCommand = styled.div`
+  font-family: var(--font-geist-mono);
+  background: #000;
+  padding: 20px;
+  border-radius: 8px;
+  color: #2ea043;
+  width: 100%;
+  border: 1px solid #30363d;
+
+  span {
+    color: #8b949e;
+    user-select: none;
+    margin-right: 12px;
+  }
+`;
+
 // --- MAIN COMPONENT ---
 export default function MarketingPage() {
   // Mouse Move for Spotlight
@@ -550,6 +603,133 @@ export default function MarketingPage() {
           </Card>
         </Grid>
       </FeatureSection>
+      {/* 3. SDK AND AGENT Section*/}
+      <CodeSection>
+        {/* A. The Log Agent */}
+        <SplitLayout>
+          <TextBlock>
+            <div
+              style={{
+                color: "#58a6ff",
+                fontWeight: 700,
+                marginBottom: 16,
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+              }}
+            >
+              <Terminal size={18} /> THE SIDECAR AGENT
+            </div>
+            <h2
+              style={{
+                fontSize: 42,
+                fontWeight: 800,
+                color: "#fff",
+                marginBottom: 24,
+                lineHeight: 1.1,
+              }}
+            >
+              Tail files. <br />
+              Push to Cloud.
+            </h2>
+            <p
+              style={{
+                fontSize: 18,
+                color: "#8b949e",
+                lineHeight: 1.6,
+                marginBottom: 32,
+              }}
+            >
+              Got legacy apps writing to{" "}
+              <code
+                style={{
+                  color: "#e2e8f0",
+                  background: "#2d333b",
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                }}
+              >
+                /var/log/nginx.log
+              </code>
+              ? No need to rewrite code. Just run the Sijil Sidecar. It tails
+              your files and pushes logs to our cloud in micro-batches.
+            </p>
+            <AgentCommand>
+              <span>$</span> ./sijil-agent --file=/var/log/app.log
+              --key=pk_live_...
+            </AgentCommand>
+          </TextBlock>
+          <VisualBlock>
+            <Image src={agentImage} alt="Log Agent" width={300} height={200} />
+          </VisualBlock>
+        </SplitLayout>
+
+        {/* B. The SDKs */}
+        <SplitLayout style={{ flexDirection: "row-reverse" }}>
+          <TextBlock>
+            <div
+              style={{
+                color: "#a371f7",
+                fontWeight: 700,
+                marginBottom: 16,
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+              }}
+            >
+              <Code size={18} /> FIRST-CLASS SDKs
+            </div>
+            <h2
+              style={{
+                fontSize: 42,
+                fontWeight: 800,
+                color: "#fff",
+                marginBottom: 24,
+                lineHeight: 1.1,
+              }}
+            >
+              Native clients for <br />
+              your stack.
+            </h2>
+            <p
+              style={{
+                fontSize: 18,
+                color: "#8b949e",
+                lineHeight: 1.6,
+                marginBottom: 32,
+              }}
+            >
+              We don&apos;t do generic HTTP wrappers. Our SDKs for Go, Python,
+              and Node.js are built for performance, with automatic retries,
+              batching, and types built-in.
+            </p>
+            <div style={{ display: "flex", gap: 16 }}>
+              {/* Simple Badges */}
+              {["Go", "Python", "TypeScript"].map((lang) => (
+                <div
+                  key={lang}
+                  style={{
+                    background: "#21262d",
+                    padding: "8px 16px",
+                    borderRadius: 99,
+                    color: "#c9d1d9",
+                    fontWeight: 600,
+                    border: "1px solid #30363d",
+                  }}
+                >
+                  {lang}
+                </div>
+              ))}
+            </div>
+          </TextBlock>
+          <VisualBlock>
+            {/* PLACEHOLDER FOR NANO BANANA "SDK" IMAGE */}
+            <div style={{ color: "#30363d", fontWeight: 800 }}>
+              <Image src={sdkImage} alt="SDKs" width={300} height={200} />
+            </div>
+          </VisualBlock>
+        </SplitLayout>
+      </CodeSection>
       {/* 3. Pricing Section */}
       <PricingSection />/
     </Container>
