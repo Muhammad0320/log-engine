@@ -67,7 +67,7 @@ export default function CookieBanner() {
   };
 
   if (!visible) return null;
-
+  p;
   return (
     <Banner>
       <Text>
