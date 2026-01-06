@@ -51,7 +51,7 @@ const Underline = styled.svg`
   width: 100%;
   height: 12px;
   z-index: -1;
-  
+
   path {
     stroke: #1f6feb; /* Darker, Deeper Blue */
     stroke-width: 4; /* Thinner (was 8) */
@@ -64,7 +64,9 @@ const Underline = styled.svg`
   }
 
   @keyframes draw {
-    to { stroke-dashoffset: 0; }
+    to {
+      stroke-dashoffset: 0;
+    }
   }
 `;
 
@@ -84,9 +86,19 @@ export default function HeroRollingText() {
   );
 }
 
-export function HandDrawnHighlight({ children }: { children: React.ReactNode }) {
+export function HandDrawnHighlight({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <span style={{ position: "relative", display: "inline-block", whiteSpace: "nowrap" }}>
+    <span
+      style={{
+        position: "relative",
+        display: "inline-block",
+        whiteSpace: "nowrap",
+      }}
+    >
       {children}
       <Underline viewBox="0 0 200 9" preserveAspectRatio="none">
         <path d="M2.00025 6.99997C25.7201 5.2046 82.5279 -0.963287 197.999 2.00003" />
