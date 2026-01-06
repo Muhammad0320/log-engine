@@ -1,16 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import styled, { keyframes, css } from "styled-components";
-import {
-  ArrowRight,
-  Database,
-  Zap,
-  Shield,
-  Cpu,
-  Check,
-  Info,
-} from "lucide-react";
+import React from "react";
+import styled, { keyframes } from "styled-components";
+import { ArrowRight, Database, Zap, Shield, Cpu } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -27,13 +19,6 @@ import BenchmarkSection from "@/components/marketing/benchmark";
 import PricingSection from "@/components/marketing/PricingSection";
 
 // --- ANIMATIONS ---
-const roll = keyframes`
-  0% { transform: translateY(0); }
-  25% { transform: translateY(-100%); }
-  50% { transform: translateY(-200%); }
-  75% { transform: translateY(-300%); }
-  100% { transform: translateY(0); }
-`;
 
 const draw = keyframes`
   to { stroke-dashoffset: 0; }
