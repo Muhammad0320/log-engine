@@ -1,9 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import styled from "styled-components";
-import { Copy, Check, Terminal, Key } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import styled, { keyframes, css } from "styled-components";
+import { Copy, Check, Terminal, Key, Play, Shield } from "lucide-react";
 import { HandDrawnHighlight } from "@/components/marketing/HeroText";
+
+// --- ANIMATIONS ---
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const blink = keyframes`
+  50% { opacity: 0; }
+`;
 
 // --- STYLES ---
 const Container = styled.div`
@@ -43,38 +53,48 @@ const Subtitle = styled.p`
 
 // --- INTERACTIVE API KEY INPUT ---
 const ApiKeyCard = styled.div`
-  background: rgba(13, 17, 23, 0.6);
+  background: rgba(13, 17, 23, 0.8);
   border: 1px solid #30363d;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 24px;
-  margin-bottom: 48px;
+  margin-bottom: 64px;
   display: flex;
-  align-items: center;
-  gap: 24px;
+  flex-direction: column;
+  gap: 20px;
   backdrop-filter: blur(12px);
   position: sticky;
-  top: 100px; /* Sticks below navbar */
+  top: 100px;
   z-index: 10;
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+`;
+
+const InputRow = styled.div`
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
 
   @media (max-width: 768px) {
     flex-direction: column;
-    align-items: stretch;
     gap: 16px;
   }
 `;
 
+const InputGroup = styled.div`
+  flex: 1;
+  width: 100%;
+`;
+
 const Label = styled.div`
+  font-size: 13px;
   font-weight: 600;
-  color: #fff;
+  color: #8b949e;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 140px;
+  gap: 6px;
 `;
 
 const InputWrapper = styled.div`
-  flex: 1;
   position: relative;
 `;
 
@@ -84,14 +104,15 @@ const Input = styled.input`
   border: 1px solid #30363d;
   color: #58a6ff;
   font-family: var(--font-geist-mono);
-  padding: 10px 12px 10px 40px;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.2s;
+  padding: 10px 12px 10px 36px;
+  border-radius: 8px;
+  font-size: 13px;
+  transition: all 0.2s;
 
   &:focus {
     outline: none;
     border-color: #58a6ff;
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
   }
   &::placeholder {
     color: #484f58;
@@ -105,8 +126,8 @@ const Section = styled.div`
 
 const Step = styled.div`
   display: flex;
-  gap: 24px;
-  margin-bottom: 48px;
+  gap: 32px;
+  margin-bottom: 64px;
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -115,26 +136,28 @@ const Step = styled.div`
 
 const StepInfo = styled.div`
   flex: 1;
-  max-width: 300px;
+  max-width: 280px;
+  padding-top: 12px;
 `;
 
 const StepNumber = styled.div`
   width: 32px;
   height: 32px;
-  background: #161b22;
+  background: linear-gradient(135deg, #161b22, #0d1117);
   border: 1px solid #30363d;
-  border-radius: 50%;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: #8b949e;
+  color: #fff;
   margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 `;
 
 const StepTitle = styled.h3`
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   color: #fff;
   margin-bottom: 8px;
 `;
@@ -145,128 +168,182 @@ const StepDesc = styled.p`
   line-height: 1.6;
 `;
 
-const StepCode = styled.div`
+const StepCodeWrapper = styled.div`
   flex: 2;
-  background: #0d1117;
-  border: 1px solid #30363d;
   border-radius: 12px;
   overflow: hidden;
+  border: 1px solid #30363d;
+  background: #0d1117;
+  position: relative;
+
+  /* The Resend-style Gradient */
+  background: radial-gradient(
+      circle at top right,
+      rgba(88, 166, 255, 0.08),
+      transparent 40%
+    ),
+    #0d1117;
 `;
 
 // --- TABS & CODE BLOCK ---
 const TabHeader = styled.div`
   display: flex;
   border-bottom: 1px solid #30363d;
-  background: #161b22;
+  background: rgba(22, 27, 34, 0.5);
+  backdrop-filter: blur(4px);
 `;
 
 const TabBtn = styled.button<{ $active: boolean }>`
-  padding: 10px 20px;
-  background: ${(p) => (p.$active ? "#0d1117" : "transparent")};
+  padding: 12px 24px;
+  background: ${(p) =>
+    p.$active ? "rgba(88, 166, 255, 0.05)" : "transparent"};
   color: ${(p) => (p.$active ? "#58a6ff" : "#8b949e")};
   border: none;
   border-right: 1px solid #30363d;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s;
 
-  ${(p) => p.$active && "border-top: 2px solid #58a6ff; margin-top: -1px;"}
+  &:hover {
+    color: #fff;
+  }
+  ${(p) => p.$active && "box-shadow: inset 0 2px 0 #58a6ff;"}
 `;
 
 const CodeArea = styled.div`
   padding: 24px;
   position: relative;
   overflow-x: auto;
-`;
-
-const Pre = styled.pre`
-  margin: 0;
   font-family: var(--font-geist-mono);
   font-size: 13px;
-  line-height: 1.6;
-  color: #c9d1d9;
+  line-height: 1.7;
 `;
 
-const Keyword = styled.span`
+// Syntax Highlighting Components
+const K = styled.span`
   color: #ff7b72;
-`;
-const String = styled.span`
+`; // Keyword
+const S = styled.span`
   color: #a5d6ff;
-`;
-const Func = styled.span`
+`; // String
+const F = styled.span`
   color: #d2a8ff;
-`;
-const Comment = styled.span`
+`; // Function
+const C = styled.span`
   color: #8b949e;
   font-style: italic;
+`; // Comment
+const P = styled.span`
+  color: #79c0ff;
+`; // Property
+const V = styled.span`
+  color: #c9d1d9;
+`; // Variable
+
+// --- LIVE DASHBOARD SIMULATION ---
+const TerminalWindow = styled.div`
+  background: #0d1117;
+  padding: 20px;
+  border-radius: 8px;
+  font-family: var(--font-geist-mono);
+  font-size: 12px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
-// --- COMPONENT ---
+const LogLine = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  animation: ${fadeIn} 0.3s ease-out;
+  border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+  padding-bottom: 8px;
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const LogTime = styled.span`
+  color: #8b949e;
+`;
+const LogLevel = styled.span<{ $level: string }>`
+  font-weight: 700;
+  color: ${(p) =>
+    p.$level === "ERROR"
+      ? "#ff7b72"
+      : p.$level === "WARN"
+      ? "#d29922"
+      : "#2ea043"};
+`;
+const LogMsg = styled.span`
+  color: #c9d1d9;
+  flex: 1;
+`;
+const Cursor = styled.span`
+  display: inline-block;
+  width: 6px;
+  height: 14px;
+  background: #58a6ff;
+  animation: ${blink} 1s infinite;
+`;
+
+const SimulateBtn = styled.button`
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: #238636;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover {
+    background: #2ea043;
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+`;
 
 export default function DocsPage() {
   const [apiKey, setApiKey] = useState("");
+  const [apiSecret, setApiSecret] = useState("");
   const [lang, setLang] = useState<"js" | "py" | "go">("js");
   const [copied, setCopied] = useState(false);
+  const [logs, setLogs] = useState<any[]>([]);
 
-  // Helper to inject the key or show placeholder
+  // Default placeholders
   const keyDisplay = apiKey || "pk_live_xxxxxxxxxxxxxxxx";
-  const secretDisplay = apiKey
-    ? apiKey.replace("pk_", "sk_")
-    : "sk_live_xxxxxxxxxxxxxxxx"; // Just a visual mock
+  const secretDisplay = apiSecret || "sk_live_xxxxxxxxxxxxxxxx";
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = () => {
+    // Logic to extract text from current view (simplified)
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const getCode = () => {
-    if (lang === "js")
-      return `
-<Keyword>import</Keyword> { SijilLogger } <Keyword>from</Keyword> <String>"@sijil/node"</String>;
-
-<Keyword>const</Keyword> logger = <Keyword>new</Keyword> <Func>SijilLogger</Func>({
-  apiKey: <String>"${keyDisplay}"</String>,
-  // In production, use environment variables!
-});
-
-<Keyword>await</Keyword> logger.<Func>info</Func>(<String>"Payment processed"</String>, {
-  amount: 5000,
-  currency: <String>"NGN"</String>,
-  user_id: <String>"user_123"</String>
-});`;
-
-    if (lang === "py")
-      return `
-<Keyword>from</Keyword> sijil <Keyword>import</Keyword> SijilLogger
-
-logger = <Func>SijilLogger</Func>(
-    api_key=<String>"${keyDisplay}"</String>
-)
-
-<Comment># Send a structured log</Comment>
-logger.<Func>info</Func>(<String>"Payment processed"</String>, {
-    <String>"amount"</String>: 5000,
-    <String>"currency"</String>: <String>"NGN"</String>
-})`;
-
-    if (lang === "go")
-      return `
-<Keyword>package</Keyword> main
-
-<Keyword>import</Keyword> <String>"github.com/sijil/go-sdk"</String>
-
-<Keyword>func</Keyword> <Func>main</Func>() {
-    logger := sijil.<Func>New</Func>(sijil.Config{
-        APIKey: <String>"${keyDisplay}"</String>,
-    })
-
-    logger.<Func>Info</Func>(<String>"Payment processed"</String>, <Keyword>map</Keyword>[<Keyword>string</Keyword>]<Keyword>interface</Keyword>{
-        <String>"amount"</String>: 5000,
-        <String>"currency"</String>: <String>"NGN"</String>,
-    })
-}`;
-    return "";
+  const simulateLog = () => {
+    const newLog = {
+      id: Date.now(),
+      time: new Date().toLocaleTimeString(),
+      level: Math.random() > 0.8 ? "ERROR" : "INFO",
+      msg:
+        Math.random() > 0.8
+          ? "Payment gateway timeout"
+          : "Payment processed successfully",
+      service: "payment-service",
+    };
+    setLogs((prev) => [newLog, ...prev].slice(0, 5));
   };
 
   return (
@@ -280,26 +357,78 @@ logger.<Func>info</Func>(<String>"Payment processed"</String>, {
           </Subtitle>
         </Header>
 
-        {/* INTERACTIVE INPUT */}
+        {/* INTERACTIVE INPUTS */}
         <ApiKeyCard>
-          <Label>
-            <Key size={16} /> API Key
-          </Label>
-          <InputWrapper>
-            <Input
-              placeholder="Paste your pk_live_... key here"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-            />
-            <div
-              style={{ position: "absolute", top: 11, left: 12, opacity: 0.5 }}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: "#fff",
+                margin: 0,
+              }}
             >
-              <Key size={14} />
+              Configure Your Snippets
+            </h3>
+            <div style={{ fontSize: 12, color: "#8b949e" }}>
+              *Keys are local-only
             </div>
-          </InputWrapper>
-          <div style={{ fontSize: 13, color: "#8b949e", maxWidth: 200 }}>
-            *We don&apos;t store this. It just updates the snippets below.
           </div>
+
+          <InputRow>
+            <InputGroup>
+              <Label>
+                <Key size={14} /> API Key (Public)
+              </Label>
+              <InputWrapper>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 11,
+                    left: 12,
+                    opacity: 0.5,
+                  }}
+                >
+                  <Key size={14} />
+                </div>
+                <Input
+                  placeholder="pk_live_..."
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                />
+              </InputWrapper>
+            </InputGroup>
+
+            <InputGroup>
+              <Label>
+                <Shield size={14} /> API Secret (Private)
+              </Label>
+              <InputWrapper>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 11,
+                    left: 12,
+                    opacity: 0.5,
+                  }}
+                >
+                  <Shield size={14} />
+                </div>
+                <Input
+                  placeholder="sk_live_..."
+                  type="password"
+                  value={apiSecret}
+                  onChange={(e) => setApiSecret(e.target.value)}
+                />
+              </InputWrapper>
+            </InputGroup>
+          </InputRow>
         </ApiKeyCard>
 
         {/* STEP 1: INSTALL */}
@@ -309,11 +438,10 @@ logger.<Func>info</Func>(<String>"Payment processed"</String>, {
               <StepNumber>1</StepNumber>
               <StepTitle>Install the SDK</StepTitle>
               <StepDesc>
-                Install the Sijil client for your language of choice. Our SDKs
-                are zero-dependency and lightweight.
+                Install the Sijil client for your language. Zero dependencies.
               </StepDesc>
             </StepInfo>
-            <StepCode>
+            <StepCodeWrapper>
               <TabHeader>
                 <TabBtn $active={lang === "js"} onClick={() => setLang("js")}>
                   npm
@@ -326,26 +454,23 @@ logger.<Func>info</Func>(<String>"Payment processed"</String>, {
                 </TabBtn>
               </TabHeader>
               <CodeArea>
-                <Pre>
-                  {lang === "js" && "npm install @sijil/node"}
-                  {lang === "py" && "pip install sijil"}
-                  {lang === "go" && "go get github.com/sijil/go-sdk"}
-                </Pre>
+                {lang === "js" && <div>npm install @sijil/node</div>}
+                {lang === "py" && <div>pip install sijil</div>}
+                {lang === "go" && <div>go get github.com/sijil/go-sdk</div>}
               </CodeArea>
-            </StepCode>
+            </StepCodeWrapper>
           </Step>
 
-          {/* STEP 2: INITIALIZE */}
+          {/* STEP 2: INITIALIZE (Using React Components for Coloring) */}
           <Step>
             <StepInfo>
               <StepNumber>2</StepNumber>
-              <StepTitle>Send your first log</StepTitle>
+              <StepTitle>Send a Log</StepTitle>
               <StepDesc>
-                Initialize the client and send a structured log. We
-                automatically capture timestamps and service metadata.
+                Initialize the client and send a structured log.
               </StepDesc>
             </StepInfo>
-            <StepCode>
+            <StepCodeWrapper>
               <TabHeader>
                 <TabBtn $active={lang === "js"} onClick={() => setLang("js")}>
                   Node.js
@@ -358,53 +483,159 @@ logger.<Func>info</Func>(<String>"Payment processed"</String>, {
                 </TabBtn>
               </TabHeader>
               <CodeArea>
-                <button
-                  onClick={() =>
-                    copyToClipboard(getCode().replace(/<[^>]+>/g, ""))
-                  }
-                  style={{
-                    position: "absolute",
-                    top: 16,
-                    right: 16,
-                    background: "#21262d",
-                    border: "1px solid #30363d",
-                    padding: 6,
-                    borderRadius: 6,
-                    cursor: "pointer",
-                    color: copied ? "#2ecc71" : "#8b949e",
-                  }}
-                >
-                  {copied ? <Check size={14} /> : <Copy size={14} />}
-                </button>
-                <Pre dangerouslySetInnerHTML={{ __html: getCode() }} />
+                {lang === "js" && (
+                  <>
+                    <div>
+                      <K>import</K> {"{"} <V>SijilLogger</V> {"}"} <K>from</K>{" "}
+                      <S>&rquo;@sijil/node&rquo;</S>;
+                    </div>
+                    <br />
+                    <div>
+                      <K>const</K> <V>logger</V> = <K>new</K> <F>SijilLogger</F>
+                      ({"{"}
+                    </div>
+                    <div style={{ paddingLeft: 20 }}>
+                      <P>apiKey:</P> <S>&rquo;{keyDisplay}&rquo;</S>,
+                    </div>
+                    <div style={{ paddingLeft: 20 }}>
+                      <P>apiSecret:</P> <S>&rquo;{secretDisplay}&rquo;</S>
+                    </div>
+                    <div>{"}"});</div>
+                    <br />
+                    <div>
+                      <K>await</K> <V>logger</V>.<F>info</F>(
+                      <S>&rquo;Payment processed&rquo;</S>, {"{"}
+                    </div>
+                    <div style={{ paddingLeft: 20 }}>
+                      <P>amount:</P> <V>000</V>,
+                    </div>
+                    <div style={{ paddingLeft: 20 }}>
+                      <P>currency:</P> <S>&rquo;NGN&rquo;</S>
+                    </div>
+                    <div>{"}"});</div>
+                  </>
+                )}
+
+                {lang === "py" && (
+                  <>
+                    <div>
+                      <K>from</K> sijil <K>import</K> SijilLogger
+                    </div>
+                    <br />
+                    <div>
+                      <V>logger</V> = <F>SijilLogger</F>(
+                    </div>
+                    <div style={{ paddingLeft: 20 }}>
+                      <P>api_key</P>=<S>&rquo;{keyDisplay}&rquo;</S>,
+                    </div>
+                    <div style={{ paddingLeft: 20 }}>
+                      <P>api_secret</P>=<S>&rquo;{secretDisplay}&rquo;</S>
+                    </div>
+                    <div>)</div>
+                    <br />
+                    <div>
+                      <V>logger</V>.<F>info</F>(
+                      <S>&rquo;Payment processed&rquo;</S>, {"{"}
+                    </div>
+                    <div style={{ paddingLeft: 20 }}>
+                      <S>&rquo;amount&rquo;</S>: <V>5000</V>,
+                    </div>
+                    <div style={{ paddingLeft: 20 }}>
+                      <S>&rquo;currency&rquo;</S>: <S>&rquo;NGN&rquo;</S>
+                    </div>
+                    <div>{"}"})</div>
+                  </>
+                )}
+
+                {lang === "go" && (
+                  <>
+                    <div>
+                      <K>package</K> main
+                    </div>
+                    <div>
+                      <K>import</K> <S>&rquo;github.com/sijil/go-sdk&rquo;</S>
+                    </div>
+                    <br />
+                    <div>
+                      <K>func</K> <F>main</F>() {"{"}
+                    </div>
+                    <div style={{ paddingLeft: 20 }}>
+                      <V>logger</V> := sijil.<F>New</F>(sijil.Config{"{"}
+                    </div>
+                    <div style={{ paddingLeft: 40 }}>
+                      <P>APIKey:</P> <S>&rquo;{keyDisplay}&rquo;</S>,
+                    </div>
+                    <div style={{ paddingLeft: 40 }}>
+                      <P>APISecret:</P> <S>&rquo;{secretDisplay}&rquo;</S>,
+                    </div>
+                    <div style={{ paddingLeft: 20 }}>{"}"})</div>
+                    <br />
+                    <div style={{ paddingLeft: 20 }}>
+                      <V>logger</V>.<F>Info</F>(
+                      <S>&rquo;Payment processed&rquo;</S>, <K>map</K>[
+                      <K>string</K>]<K>interface</K>
+                      {"{"}
+                    </div>
+                    <div style={{ paddingLeft: 40 }}>
+                      <S>&rquo;amount&rquo;</S>: <V>5000</V>,
+                    </div>
+                    <div style={{ paddingLeft: 40 }}>
+                      <S>&rquo;currency&rquo;</S>: <S>&rquo;NGN&rquo;</S>,
+                    </div>
+                    <div style={{ paddingLeft: 20 }}>{"}"})</div>
+                    <div>{"}"}</div>
+                  </>
+                )}
               </CodeArea>
-            </StepCode>
+            </StepCodeWrapper>
           </Step>
 
-          {/* STEP 3: DASHBOARD */}
+          {/* STEP 3: LIVE DASHBOARD SIMULATION */}
           <Step>
             <StepInfo>
               <StepNumber>3</StepNumber>
-              <StepTitle>Check the Dashboard</StepTitle>
+              <StepTitle>Watch it Live</StepTitle>
               <StepDesc>
-                Go to the{" "}
-                <a href="/dashboard" style={{ color: "#58a6ff" }}>
-                  Live Dashboard
-                </a>
-                . You should see your log appear instantly via WebSocket.
+                Go to your dashboard. Logs appear instantly via our WebSocket
+                engine. Try sending a test log!
               </StepDesc>
             </StepInfo>
-            <StepCode>
-              <div
-                style={{ padding: 40, textAlign: "center", color: "#8b949e" }}
-              >
-                <Terminal
-                  size={48}
-                  style={{ marginBottom: 16, opacity: 0.5 }}
-                />
-                <div>Waiting for incoming logs...</div>
-              </div>
-            </StepCode>
+            <StepCodeWrapper style={{ border: "1px solid #30363d" }}>
+              <TerminalWindow>
+                {logs.length === 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: 160,
+                      color: "#8b949e",
+                      opacity: 0.6,
+                    }}
+                  >
+                    <Terminal size={32} style={{ marginBottom: 12 }} />
+                    <div>Listening for incoming logs...</div>
+                  </div>
+                )}
+                {logs.map((log) => (
+                  <LogLine key={log.id}>
+                    <LogTime>{log.time}</LogTime>
+                    <LogLevel $level={log.level}>{log.level}</LogLevel>
+                    <LogMsg>
+                      [{log.service}] {log.msg}
+                    </LogMsg>
+                  </LogLine>
+                ))}
+                <div style={{ marginTop: "auto", paddingTop: 8 }}>
+                  <span style={{ color: "#2ea043" }}>➜</span>{" "}
+                  <span style={{ color: "#58a6ff" }}>~</span> <Cursor />
+                </div>
+              </TerminalWindow>
+              <SimulateBtn onClick={simulateLog}>
+                <Play size={12} fill="currentColor" /> Simulate Log Event
+              </SimulateBtn>
+            </StepCodeWrapper>
           </Step>
         </Section>
       </ContentWrapper>
