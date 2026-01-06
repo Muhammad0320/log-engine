@@ -548,14 +548,18 @@ export default function DocsPage() {
                     <div style={{ paddingLeft: 20 }}>
                       <P>api_key</P>=
                       <S>
-                        {'"'} {keyDisplay} {'"'}
+                        {'"'}
+                        {keyDisplay}
+                        {'"'}
                       </S>
                       ,
                     </div>
                     <div style={{ paddingLeft: 20 }}>
                       <P>api_secret</P>=
                       <S>
-                        {'"'} {secretDisplay} {'"'}
+                        {'"'}
+                        {secretDisplay}
+                        {'"'}
                       </S>
                     </div>
                     <div>)</div>
@@ -563,24 +567,24 @@ export default function DocsPage() {
                     <div>
                       <V>logger</V>.<F>info</F>(
                       <S>
-                        {'"'} Payment processed {'"'}
+                        {'"'}Payment processed{'"'}
                       </S>
                       , {"{"}
                     </div>
                     <div style={{ paddingLeft: 20 }}>
                       <S>
                         {" "}
-                        {'"'} amount {'"'}{" "}
+                        {'"'}amount{'"'}{" "}
                       </S>
                       : <V>5000</V>,
                     </div>
                     <div style={{ paddingLeft: 20 }}>
                       <S>
-                        {'"'} currency {'"'}
+                        {'"'}currency{'"'}
                       </S>
-                      :
+                      :{" "}
                       <S>
-                        {'"'} NGN {'"'}
+                        {'"'}NGN{'"'}
                       </S>
                     </div>
                     <div>{"}"})</div>
@@ -595,7 +599,7 @@ export default function DocsPage() {
                     <div>
                       <K>import</K>
                       <S>
-                        {'"'} github.com/sijil/go-sdk {'"'}
+                        {' "'}github.com/sijil/go-sdk{'"'}
                       </S>
                     </div>
                     <br />
@@ -608,14 +612,18 @@ export default function DocsPage() {
                     <div style={{ paddingLeft: 40 }}>
                       <P>APIKey:</P>
                       <S>
-                        {'"'} {keyDisplay} {'"'}
+                        {' "'}
+                        {keyDisplay}
+                        {'"'}
                       </S>
                       ,
                     </div>
                     <div style={{ paddingLeft: 40 }}>
                       <P>APISecret:</P>
                       <S>
-                        {'"'} {secretDisplay} {'"'}
+                        {' "'}
+                        {secretDisplay}
+                        {'"'}
                       </S>
                       ,
                     </div>
@@ -624,24 +632,24 @@ export default function DocsPage() {
                     <div style={{ paddingLeft: 20 }}>
                       <V>logger</V>.<F>Info</F>(
                       <S>
-                        {'"'} Payment processed {'"'}
+                        {'"'}Payment processed{'"'}
                       </S>
                       , <K>map</K>[<K>string</K>]<K>interface</K>
                       {"{"}
                     </div>
                     <div style={{ paddingLeft: 40 }}>
                       <S>
-                        {'"'} amount {'"'}
+                        {'"'}amount{'"'}
                       </S>
-                      : <V>5000</V>,
+                      : <V>12000</V>,
                     </div>
                     <div style={{ paddingLeft: 40 }}>
                       <S>
-                        {'"'} currency {'"'}
+                        {'"'}currency{'"'}
                       </S>
                       :
                       <S>
-                        {'"'} NGN {'"'}
+                        {' "'}NGN{'"'}
                       </S>
                       ,
                     </div>
