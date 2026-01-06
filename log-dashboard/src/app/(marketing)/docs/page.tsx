@@ -315,11 +315,13 @@ const SimulateBtn = styled.button`
   }
 `;
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export default function DocsPage() {
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [lang, setLang] = useState<"js" | "py" | "go">("js");
   const [copied, setCopied] = useState(false);
+
   const [logs, setLogs] = useState<any[]>([]);
 
   // Default placeholders
@@ -328,6 +330,7 @@ export default function DocsPage() {
 
   const copyToClipboard = () => {
     // Logic to extract text from current view (simplified)
+    // navigator.clipboard.write()
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
