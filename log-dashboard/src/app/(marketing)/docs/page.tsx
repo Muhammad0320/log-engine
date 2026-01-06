@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import styled from "styled-components";
 import { Copy, Check, Terminal, Key } from "lucide-react";
 import { HandDrawnHighlight } from "@/components/marketing/HeroText";
@@ -101,16 +101,6 @@ const Input = styled.input`
 // --- DOCS SECTION ---
 const Section = styled.div`
   margin-bottom: 80px;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
 `;
 
 const Step = styled.div`

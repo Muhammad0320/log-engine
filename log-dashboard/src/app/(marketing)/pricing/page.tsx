@@ -1,16 +1,11 @@
-import PricingSection from "@/components/marketing/PricingSection";
-import styled from "styled-components";
-
-const Container = styled.div`
-  padding-top: 100px;
-  min-height: 100vh;
-  background: #050505;
-`;
+import PricingSection, {
+  PricingContainer,
+} from "@/components/marketing/PricingSection";
 
 export default function PricingPage() {
   return (
-    <Container>
+    <PricingContainer>
       <PricingSection />
-    </Container>
+    </PricingContainer>
   );
 }

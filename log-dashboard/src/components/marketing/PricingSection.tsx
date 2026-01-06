@@ -1,3 +1,5 @@
+"use client";
+
 import { Check, Info } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -139,6 +141,12 @@ const SectionHeader = styled.div`
     font-size: 18px;
     color: #8b949e;
   }
+`;
+
+export const PricingContainer = styled.div`
+  padding-top: 100px;
+  min-height: 100vh;
+  background: #050505;
 `;
 
 export default function PricingSection() {

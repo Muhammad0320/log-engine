@@ -21,6 +21,9 @@ const firaCode = Fira_Code({
 export const metadata: Metadata = {
   title: "Sijil",
   description: "High-throughput log ingestion",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({

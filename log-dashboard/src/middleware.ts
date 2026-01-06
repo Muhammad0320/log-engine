@@ -12,7 +12,7 @@ export async function middleware(request: NextRequest) {
   // 1. If NO session
   if (!session) {
     // If trying to access protected routes, redirect to login
-    if (!isAuthPage && path !== "/") {
+    if (!isAuthPage && path !== "/" && path != "/pricing" && path != "/docs") {
       return NextResponse.redirect(new URL("/login", request.url));
     }
     // Otherwise, let them proceed (to login/register/landing)
