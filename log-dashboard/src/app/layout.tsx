@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fira_Code, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
 import { ToastProvider } from "@/providers/ToastProvider";
 
 const geistSans = Geist({
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
   title: "Sijil",
   description: "High-throughput log ingestion",
   icons: {
-    icon: "/logo.png",
+    icon: "../../public/logo.png",
   },
 };
 
