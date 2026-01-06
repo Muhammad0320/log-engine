@@ -1,68 +1,74 @@
 "use client";
 
-import React from "react";
-import styled, { keyframes } from "styled-components";
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
 
-// Total Items: 4 (3 real + 1 clone)
-// We want to pause on each item for 25% of the time, then slide.
-const infiniteScroll = keyframes`
-  0%, 20% { transform: translateY(0); }        /* Item 1 */
-  25%, 45% { transform: translateY(-100%); }   /* Item 2 */
-  50%, 70% { transform: translateY(-200%); }   /* Item 3 */
-  75%, 95% { transform: translateY(-300%); }   /* Item 4 (Clone of 1) */
-  100% { transform: translateY(-300%); }       /* End state (visually same as start) */
-`;
-
-const Wrapper = styled.span`
+const Container = styled.div`
   display: inline-flex;
   flex-direction: column;
-  height: 1.1em; /* Locked height */
+  height: 1.1em; /* Visible Window */
+  line-height: 1.1em;
   overflow: hidden;
-  vertical-align: bottom;
   text-align: left;
   margin-left: 12px;
+  vertical-align: bottom;
 `;
 
-const RollList = styled.ul`
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  /* 8s duration:
-     2s per item (1.5s pause + 0.5s slide)
-  */
-  animation: ${infiniteScroll} 8s cubic-bezier(0.5, 0, 0.2, 1) infinite;
-
-  /* IMPORTANT: When animation ends at 100% (Item 4), 
-     it loops back to 0% (Item 1) instantly. 
-     Since Item 4 == Item 1, the jump is invisible. 
-  */
+const SlideTrack = styled.div<{ $offset: number; $animate: boolean }>`
+  transform: translateY(-${(p) => p.$offset * 1.1}em);
+  transition: ${(p) =>
+    p.$animate ? "transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)" : "none"};
 `;
 
-const RollItem = styled.li`
+const Item = styled.div`
   height: 1.1em;
-  line-height: 1.1em;
-  display: block;
   color: #58a6ff;
   font-weight: 800;
   white-space: nowrap;
+  /* Cyber Glow */
   text-shadow: 0 0 20px rgba(88, 166, 255, 0.4);
 `;
 
+const words = ["Hyperscale Ingestion.", "HFT Systems.", "Realtime Debugging."];
+
 export default function HeroRollingText() {
+  const [index, setIndex] = useState(0);
+  const [animate, setAnimate] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAnimate(true);
+      setIndex((prev) => prev + 1);
+    }, 2500); // Wait 2.5s before sliding
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // The Infinite Loop Trick
+  useEffect(() => {
+    // If we reached the clone (last item), wait for animation to finish, then snap back
+    if (index === words.length) {
+      const timeout = setTimeout(() => {
+        setAnimate(false); // Disable transition
+        setIndex(0); // Snap to top instantly
+      }, 500); // Matches transition duration (0.5s)
+      return () => clearTimeout(timeout);
+    }
+  }, [index]);
+
   return (
-    <Wrapper>
-      <RollList>
-        <RollItem>Hyperscale Ingestion.</RollItem>
-        <RollItem>HFT Systems.</RollItem>
-        <RollItem>Realtime Debugging.</RollItem>
-        {/* CLONE THE FIRST ITEM HERE */}
-        <RollItem>Hyperscale Ingestion.</RollItem>
-      </RollList>
-    </Wrapper>
+    <Container>
+      <SlideTrack $offset={index} $animate={animate}>
+        {words.map((word, i) => (
+          <Item key={i}>{word}</Item>
+        ))}
+        {/* The Clone for the smooth loop */}
+        <Item>{words[0]}</Item>
+      </SlideTrack>
+    </Container>
   );
 }
 
-// ... HandDrawnHighlight remains the same (removed unused 'squiggly') ...
 export function HandDrawnHighlight({
   children,
 }: {
