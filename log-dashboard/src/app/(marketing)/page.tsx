@@ -99,9 +99,8 @@ const Pill = styled.div`
   backdrop-filter: blur(4px);
   box-shadow: 0 0 15px rgba(88, 166, 255, 0.2);
 `;
-
 const HeroTitle = styled.h1`
-  font-size: 72px;
+  font-size: 70px;
   font-weight: 800;
   letter-spacing: -2px;
   line-height: 1.1;
@@ -111,8 +110,15 @@ const HeroTitle = styled.h1`
   max-width: 1200px;
   color: #fff;
 
+  /* Flexbox to keep everything inline on large screens */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+
   @media (max-width: 768px) {
     font-size: 48px;
+    flex-direction: column; /* Stack on mobile */
   }
 `;
 
@@ -355,7 +361,7 @@ export default function MarketingPage() {
         </Pill>
 
         <HeroTitle>
-          <HeroRollingText />
+          The Log Engine for <HeroRollingText />
         </HeroTitle>
 
         <Subtitle>
