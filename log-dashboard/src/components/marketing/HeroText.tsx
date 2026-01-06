@@ -50,7 +50,6 @@ export default function HeroRollingText() {
         <RollItem>Hyperscale Ingestion.</RollItem>
         <RollItem>HFT Systems.</RollItem>
         <RollItem>Realtime Debugging.</RollItem>
-        {/* <RollItem>Hyperscale Ingestion.</RollItem> */}
         {/* Duplicate first item for seamless loop if needed, 
             but for 3-step snap, we usually just snap back to 0. 
             Let's keep 3 distinct items for simplicity. */}

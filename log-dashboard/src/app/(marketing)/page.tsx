@@ -99,6 +99,7 @@ const Pill = styled.div`
   backdrop-filter: blur(4px);
   box-shadow: 0 0 15px rgba(88, 166, 255, 0.2);
 `;
+
 const HeroTitle = styled.h1`
   font-size: 70px;
   font-weight: 800;
