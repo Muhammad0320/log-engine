@@ -38,6 +38,7 @@ const scanlineAnim = keyframes`
 `;
 
 // --- STYLED COMPONENTS ---
+
 const Container = styled.div`
   min-height: 100vh;
   width: 100%;
@@ -112,26 +113,6 @@ const HeroTitle = styled.h1`
 
   @media (max-width: 768px) {
     font-size: 48px;
-  }
-`;
-
-const PaintedUnderlineSVG = styled.svg`
-  position: absolute;
-  bottom: -15px;
-  left: 0;
-  width: 100%;
-  height: 20px;
-  z-index: -1;
-
-  path {
-    stroke: #58a6ff;
-    stroke-width: 8;
-    stroke-linecap: round;
-    stroke-dasharray: 400;
-    stroke-dashoffset: 400;
-    fill: none;
-    opacity: 0.6;
-    animation: ${draw} 1.5s ease-out forwards 0.5s;
   }
 `;
 
@@ -378,7 +359,7 @@ export default function MarketingPage() {
         </HeroTitle>
 
         <Subtitle>
-          Built by developers, for
+          Built by developers, for{" "}
           <HandDrawnHighlight> developers. </HandDrawnHighlight>
           <UPS>
             <span style={{ color: "#2ea043", fontWeight: 800 }}>104,000+</span>{" "}
