@@ -66,11 +66,11 @@ func NewClient(cfg Config) *Client {
 	}
 
 	if cfg.Endpoint == "" {
-		cfg.Endpoint = "https://api.sijil.dev/v1/logs"
+		cfg.Endpoint = "https://api.sijil.dev/v1/ingest"
 	}
 
 	if cfg.FlushTime == 0 || cfg.FlushTime < 250*time.Millisecond {
-		cfg.FlushTime = 1 * time.Second
+		cfg.FlushTime = 500 * time.Millisecond
 	}
 
 	c := &Client{
