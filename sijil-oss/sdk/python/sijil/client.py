@@ -33,6 +33,9 @@ class SijilLogger:
             t = threading.Thread(target=self._worker_loop, daemon=True)
             t.start()
             self.workers.append(t)
+    
+    def set_service(self, name):
+            self.service = name
         
     def info(self, msg, data=None): self._push("info", msg, data)
     def warn(self, msg, data=None): self._push("warn", msg, data)

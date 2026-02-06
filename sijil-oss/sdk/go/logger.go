@@ -25,6 +25,7 @@ type Config struct {
 	APIKey    string
 	APISecret string
 	Endpoint  string // For self hosted users
+	Service   string
 
 	// The Tuning knob
 	FlushTime time.Duration
@@ -37,6 +38,7 @@ func DefaultConfig(key, secret string) Config {
 		APISecret: secret,
 		Endpoint:  "https://api.sijil.dev/v1/ingest",
 		FlushTime: 1 * time.Second,
+		Service:   "default",
 	}
 }
 
@@ -73,12 +75,17 @@ func NewClient(cfg Config) *Client {
 		cfg.FlushTime = 500 * time.Millisecond
 	}
 
+	svc := cfg.Service
+	if svc == "" {
+		svc = "default"
+	}
+
 	c := &Client{
 		config:   cfg,
 		queue:    make(chan LogEntry, maxQueue),
 		client:   &http.Client{Timeout: 5 * time.Second},
 		shutdown: make(chan struct{}),
-		service:  "default", // can be overridden perlog or global
+		service:  svc, // can be overridden perlog or global
 	}
 
 	for i := range workerCount {
