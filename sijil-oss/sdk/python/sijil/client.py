@@ -14,7 +14,7 @@ MAX_RETRIES=3
 
 
 class SijilLogger: 
-    def __init__(self, api_key, api_secret, endpoint=None, service="default"): 
+    def __init__(self, api_key, api_secret, endpoint=None, service="default", silent=False): 
         if not api_key or not api_secret: 
             raise ValueError("Sijil: Credentials missing")
         
@@ -22,6 +22,7 @@ class SijilLogger:
         self.api_secret = api_secret
         self.endpoint = endpoint or ENDPOINT
         self.service = service
+        self.silent = silent
         
         # State
         self.queue = queue.Queue(maxsize=MAX_QUEUE_SIZE)
@@ -98,7 +99,8 @@ class SijilLogger:
                     return
                 # Client Error -> Fail Fast
                 if 400 <= resp.status_code < 500:
-                    sys.stderr.write(f"Sijil Auth Error: {resp.status_code}\n")
+                    if not self.silent:
+                        sys.stderr.write(f"Sijil Auth Error: {resp.status_code}\n")
                     return
                 # Server Error -> Retry
             except Exception:
@@ -107,8 +109,12 @@ class SijilLogger:
             # Exponential Backoff
             time.sleep(0.1 * (2 ** attempt))
 
+        if not self.silent: 
+            sys.stderr.write(f"Sijil: Dropped {len(batch)} logs\n")
+
     def close(self):
         """Gracefully shutdown and flush pending logs"""
         self._stop_event.set()
         for t in self.workers:
             t.join(timeout=5.0)
+    
